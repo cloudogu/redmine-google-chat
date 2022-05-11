@@ -214,7 +214,6 @@ class HangoutsChatListener < Redmine::Hook::Listener
   def speak(msg, thread, card = nil, url = nil)
     url = Setting.plugin_redmine_hangouts_chat['hangouts_chat_url'] if not url
     username = msg[:author]
-    icon = Setting.plugin_redmine_hangouts_chat['icon']
     url = url + '&thread_key=' + thread if thread
 
     card[:header] = {
@@ -243,7 +242,6 @@ class HangoutsChatListener < Redmine::Hook::Listener
     } if msg[:project_link]
 
     params[:sender] = { :displayName => username } if username
-    puts params.to_json
     begin
       client = HTTPClient.new
       client.ssl_config.cert_store.set_default_paths
