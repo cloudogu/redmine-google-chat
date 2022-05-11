@@ -18,7 +18,7 @@ from the plugin directory.
 
 Restart Redmine, and you should see the plugin show up in the Plugins page.
 Under the configuration options, set the generated Google Chat URL to the URL for an
-Incoming WebHook integration in your Google account.
+Incoming WebHook integration in your Google account. (https://developers.google.com/chat/how-tos/webhooks#define_an_incoming_webhook)
 
 ## Customized Routing
 
