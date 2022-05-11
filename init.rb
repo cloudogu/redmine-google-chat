@@ -3,7 +3,7 @@ require 'redmine'
 require_dependency 'redmine_hangouts_chat/listener'
 
 Redmine::Plugin.register :redmine_hangouts_chat do
-	name 'Redmine Hangouts Chat'
+	name 'Redmine Google Chat'
 	author 'Samuel Cormier-Iijima'
 	url 'https://github.com/patope/redmine-hangouts-chat'
 	description 'Google Hangouts Chat integration'

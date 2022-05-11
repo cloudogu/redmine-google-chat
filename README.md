@@ -5,10 +5,10 @@ channel. Improvements are welcome! Just send a pull request.
 
 ## Installation
 
-From your Redmine plugins directory, clone this repository as `redmine_google_chat` (note
+From your Redmine plugins directory, clone this repository as `redmine_hangouts_chat` (note
 the underscore!):
 
-    git clone https://github.com/patope/redmine-hangouts-chat.git redmine_google_chat
+    git clone https://github.com/cloudogu/redmine-hangouts-chat.git redmine_hangouts_chat
 
 You will also need the `httpclient` dependency, which can be installed by running
 
@@ -17,8 +17,8 @@ You will also need the `httpclient` dependency, which can be installed by runnin
 from the plugin directory.
 
 Restart Redmine, and you should see the plugin show up in the Plugins page.
-Under the configuration options, set the Slack API URL to the URL for an
-Incoming WebHook integration in your Slack account.
+Under the configuration options, set the generated Google Chat URL to the URL for an
+Incoming WebHook integration in your Google account.
 
 ## Customized Routing
 
@@ -30,4 +30,4 @@ from being sent for a project, set the custom thread to `-`.
 
 For more information, see http://www.redmine.org/projects/redmine/wiki/Plugins.
 
-This is based on redmine slack plugin https://github.com/sciyoshi/redmine-slack
+This is based on redmine slack plugin https://github.com/patope/redmine-google-chat
