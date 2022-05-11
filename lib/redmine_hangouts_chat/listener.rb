@@ -71,7 +71,9 @@ class HangoutsChatListener < Redmine::Hook::Listener
       }
     } if Setting.plugin_redmine_hangouts_chat['display_watchers'] == 'yes' and issue.watcher_users.length > 0
 
-    card[:sections] = widgets
+    card[:sections] = [
+      { :widgets => widgets }
+    ]
 
     speak msg, thread, card, url
   end
@@ -214,6 +216,7 @@ class HangoutsChatListener < Redmine::Hook::Listener
   def speak(msg, thread, card = nil, url = nil)
     url = Setting.plugin_redmine_hangouts_chat['hangouts_chat_url'] if not url
     username = msg[:author]
+    icon = Setting.plugin_redmine_hangouts_chat['icon']
     url = url + '&thread_key=' + thread if thread
 
     card[:header] = {
@@ -242,6 +245,7 @@ class HangoutsChatListener < Redmine::Hook::Listener
     } if msg[:project_link]
 
     params[:sender] = { :displayName => username } if username
+    puts params.to_json
     begin
       client = HTTPClient.new
       client.ssl_config.cert_store.set_default_paths
@@ -275,21 +279,17 @@ class HangoutsChatListener < Redmine::Hook::Listener
   def object_url(obj)
     if Setting.host_name.to_s =~ /\A(https?:\/\/)?(.+?)(:(\d+))?(\/.+)?\z/i
       host, port, prefix = $2, $4, $5
-      Rails.application.routes.url_for(
-        obj.event_url(
-          {
-            :host => host,
-            :protocol => Setting.protocol,
-            :port => port,
-            :script_name => prefix
-          }))
+      Rails.application.routes.url_for(obj.event_url({
+                                                       :host => host,
+                                                       :protocol => Setting.protocol,
+                                                       :port => port,
+                                                       :script_name => prefix
+                                                     }))
     else
-      Rails.application.routes.url_for(
-        obj.event_url(
-          {
-            :host => Setting.host_name,
-            :protocol => Setting.protocol
-          }))
+      Rails.application.routes.url_for(obj.event_url({
+                                                       :host => Setting.host_name,
+                                                       :protocol => Setting.protocol
+                                                     }))
     end
   end
 
