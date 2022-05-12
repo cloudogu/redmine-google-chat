@@ -8,7 +8,7 @@ channel. Improvements are welcome! Just send a pull request.
 From your Redmine plugins directory, clone this repository as `redmine_hangouts_chat` (note
 the underscore!):
 
-    git clone https://github.com/cloudogu/redmine-hangouts-chat.git redmine_hangouts_chat
+    git clone https://github.com/cloudogu/redmine-google-chat.git redmine_hangouts_chat
 
 You will also need the `httpclient` dependency, which can be installed by running
 
