@@ -250,7 +250,6 @@ module HangoutsChat
 
       params[:sender] = { :displayName => username } if username
       params[:thread] = { :threadKey => thread }
-      puts params.to_json
       begin
         client = HTTPClient.new
         client.ssl_config.cert_store.set_default_paths
