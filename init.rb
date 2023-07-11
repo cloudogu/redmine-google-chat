@@ -1,13 +1,11 @@
 require 'redmine'
 
-# require_dependency 'redmine_hangouts_chat/listener'
-
 Redmine::Plugin.register :redmine_hangouts_chat do
 	name 'Redmine Google Chat'
 	author 'Samuel Cormier-Iijima'
 	url 'https://github.com/cloudogu/redmine-google-chat'
 	description 'Google Chat integration'
-	version '0.3.0'
+	version '0.4.0'
 
 	requires_redmine :version_or_higher => '0.8.0'
 
