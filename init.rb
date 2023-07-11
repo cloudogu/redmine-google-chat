@@ -1,6 +1,6 @@
 require 'redmine'
 
-require_dependency 'redmine_hangouts_chat/listener'
+# require_dependency 'redmine_hangouts_chat/listener'
 
 Redmine::Plugin.register :redmine_hangouts_chat do
 	name 'Redmine Google Chat'
@@ -21,9 +21,4 @@ Redmine::Plugin.register :redmine_hangouts_chat do
 		:partial => 'settings/hangouts_chat_settings'
 end
 
-((Rails.version > "5")? ActiveSupport::Reloader : ActionDispatch::Callbacks).to_prepare do
-	require_dependency 'issue'
-	unless Issue.included_modules.include? RedmineHangoutsChat::IssuePatch
-		Issue.send(:include, RedmineHangoutsChat::IssuePatch)
-	end
-end
+Issue.send(:include, HangoutsChat::IssuePatch)

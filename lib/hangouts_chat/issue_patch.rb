@@ -1,4 +1,4 @@
-module RedmineHangoutsChat
+module HangoutsChat
 	module IssuePatch
 		def self.included(base) # :nodoc:
 			base.extend(ClassMethods)
