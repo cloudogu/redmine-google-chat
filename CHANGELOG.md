@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.4.1] 2023-07-27
+### Fixed
+- Chat message does not contain changed fields and their values (#5)
+
 ## [v0.4.0] 2023-07-11
 ### Changed
 - Rename modules to match the structure required by zeitwerk (#3)
