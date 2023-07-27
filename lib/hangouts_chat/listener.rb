@@ -214,18 +214,19 @@ module HangoutsChat
       speak comment, thread, card, url
     end
 
-    def speak(msg, thread, card = nil, url = nil)
+    def speak(msg, thread, card_param = nil, url = nil)
       url = Setting.plugin_redmine_hangouts_chat['hangouts_chat_url'] unless url
       username = msg[:author]
       icon = Setting.plugin_redmine_hangouts_chat['icon']
       url = url + '&thread_key=' + thread if thread
+
 
       card = {
         :header => {
           :title => "#{msg[:author]} #{msg[:action]} #{escape msg[:issue].to_s} #{msg[:mentions]}",
           :subtitle => "#{escape msg[:project_name].to_s}"
         },
-        :sections => []
+        :sections => if card_param.nil? then [] else card_param[:sections] end
       }
 
       params = {
