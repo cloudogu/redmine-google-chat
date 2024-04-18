@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.4.2] 2024-04-18
+### Fixed
+- Handle Chat URL detection properly and fix errors like the following (#7):
+  - `TypeError (no implicit conversion of Issue into String` in `listener.rb:281:in escapeHTML`
+
 ## [v0.4.1] 2023-07-27
 ### Fixed
 - Chat message does not contain changed fields and their values (#5)
