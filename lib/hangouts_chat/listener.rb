@@ -134,6 +134,20 @@ module HangoutsChat
       return unless thread and url and issue.save
       return if issue.is_private?
 
+      unless url
+        Rails.logger.debug("ending interacting with google chat because url is #{url}")
+        return
+      end
+      unless url.start_with?("http")
+        Rails.logger.debug("ending interacting with google chat because #{url} does not seem to contain a valid URL")
+        return
+      end
+
+      Rails.logger.info("found google chat ticket to url #{url}")
+      Rails.logger.debug("thread #{thread}")
+      Rails.logger.debug("g. hangout chat url #{Setting.plugin_redmine_hangouts_chat['hangouts_chat_url']}")
+      Rails.logger.debug("g. hangout chat thr #{Setting.plugin_redmine_hangouts_chat['thread']}")
+
       msg = {
         :project_name => issue.project,
         :author => journal.user.to_s,
