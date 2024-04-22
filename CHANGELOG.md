@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Fixed
+- Handle Chat URL detection properly and fix errors like the following (#7)
+  - The previous release did not actually fix the problem for our usecases
 
 ## [v0.4.2] 2024-04-18
 ### Fixed
