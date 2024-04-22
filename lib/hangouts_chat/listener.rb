@@ -79,6 +79,24 @@ module HangoutsChat
       speak msg, thread, card, url
     end
 
+    def should_chat_message_be_sent(thread, url)
+      unless url
+        Rails.logger.debug("ending interacting with google chat because url is #{url}")
+        return false
+      end
+      unless url.start_with?("http")
+        Rails.logger.debug("ending interacting with google chat because #{url} does not seem to contain a valid URL")
+        return false
+      end
+
+      Rails.logger.info("found google chat ticket to url #{url}")
+      Rails.logger.debug("thread #{thread}")
+      Rails.logger.debug("g. hangout chat url #{Setting.plugin_redmine_hangouts_chat['hangouts_chat_url']}")
+      Rails.logger.debug("g. hangout chat thr #{Setting.plugin_redmine_hangouts_chat['thread']}")
+
+      return true
+    end
+
     def redmine_hangouts_chat_issues_edit_after_save(context = {})
       issue = context[:issue]
       journal = context[:journal]
@@ -89,6 +107,7 @@ module HangoutsChat
       return unless thread and url and Setting.plugin_redmine_hangouts_chat['post_updates'] == '1'
       return if issue.is_private?
       return if journal.private_notes?
+      return unless should_chat_message_be_sent(thread, url)
 
       msg = {
         :project_name => issue.project,
@@ -133,20 +152,7 @@ module HangoutsChat
 
       return unless thread and url and issue.save
       return if issue.is_private?
-
-      unless url
-        Rails.logger.debug("ending interacting with google chat because url is #{url}")
-        return
-      end
-      unless url.start_with?("http")
-        Rails.logger.debug("ending interacting with google chat because #{url} does not seem to contain a valid URL")
-        return
-      end
-
-      Rails.logger.info("found google chat ticket to url #{url}")
-      Rails.logger.debug("thread #{thread}")
-      Rails.logger.debug("g. hangout chat url #{Setting.plugin_redmine_hangouts_chat['hangouts_chat_url']}")
-      Rails.logger.debug("g. hangout chat thr #{Setting.plugin_redmine_hangouts_chat['thread']}")
+      return unless should_chat_message_be_sent(thread, url)
 
       msg = {
         :project_name => issue.project,
@@ -353,6 +359,8 @@ module HangoutsChat
         key = detail.prop_key.to_s.sub("_id", "")
         if key == "parent"
           title = I18n.t "field_#{key}_issue"
+        elsif key == "child"
+          title = I18n.t "label_subtask"
         else
           title = I18n.t "field_#{key}"
         end
@@ -387,10 +395,10 @@ module HangoutsChat
         value = escape version.to_s
       when "attachment"
         attachment = Attachment.find(detail.prop_key) rescue nil
-        value = "<#{object_url attachment}|#{escape attachment.filename}>" if attachment
+        value = "#{escape attachment.filename}" if attachment
       when "parent"
         issue = Issue.find(detail.value) rescue nil
-        value = "<#{object_url issue}|#{escape issue}>" if issue
+        value = "#{issue.id}" if issue
       end
 
       value = "-" if value.empty?

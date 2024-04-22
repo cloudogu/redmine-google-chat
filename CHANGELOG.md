@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.4.3] 2024-04-22
+### Fixed
+- Handle Chat URL detection properly and fix errors like the following (#7)
+  - The previous release did not actually fix the problem for our usecases
+
 ## [v0.4.2] 2024-04-18
 ### Fixed
 - Handle Chat URL detection properly and fix errors like the following (#7):
