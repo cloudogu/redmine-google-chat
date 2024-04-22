@@ -359,6 +359,8 @@ module HangoutsChat
         key = detail.prop_key.to_s.sub("_id", "")
         if key == "parent"
           title = I18n.t "field_#{key}_issue"
+        elsif key == "child"
+          title = I18n.t "label_subtask"
         else
           title = I18n.t "field_#{key}"
         end
@@ -393,10 +395,10 @@ module HangoutsChat
         value = escape version.to_s
       when "attachment"
         attachment = Attachment.find(detail.prop_key) rescue nil
-        value = "<#{object_url attachment}|#{escape attachment.filename}>" if attachment
+        value = "#{escape attachment.filename}" if attachment
       when "parent"
         issue = Issue.find(detail.value) rescue nil
-        value = "<#{object_url issue}|#{escape issue.to_s}>" if issue
+        value = "#{issue.id}" if issue
       end
 
       value = "-" if value.empty?
