@@ -396,7 +396,7 @@ module HangoutsChat
         value = "<#{object_url attachment}|#{escape attachment.filename}>" if attachment
       when "parent"
         issue = Issue.find(detail.value) rescue nil
-        value = "<#{object_url issue}|#{escape issue}>" if issue
+        value = "<#{object_url issue}|#{escape issue.to_s}>" if issue
       end
 
       value = "-" if value.empty?
