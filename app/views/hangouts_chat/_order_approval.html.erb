@@ -1,0 +1,14 @@
+<% if HangoutsChat::OrderApproval.applicable?(issue) %>
+  <% approval = HangoutsChat::OrderApproval.approval_journal(issue) %>
+  <hr />
+  <div class="order-approval" id="order-approval">
+    <% if approval %>
+      <p><strong><%= l(:label_order_approved_by, :user => approval.user.to_s, :time => format_time(approval.created_on)) %></strong></p>
+    <% elsif HangoutsChat::OrderApproval.approvable?(issue) %>
+      <%= button_to l(:button_order_approve), order_approval_path(issue),
+                    :method => :post, :data => { :confirm => l(:text_are_you_sure) } %>
+    <% elsif User.current.anonymous? %>
+      <p><%= link_to l(:label_order_login_to_approve), signin_path(:back_url => issue_url(issue, :anchor => 'order-approval')) %></p>
+    <% end %>
+  </div>
+<% end %>

@@ -1,0 +1,6 @@
+de:
+  button_order_approve: "Freigeben"
+  label_order_approved_by: "Freigegeben von %{user} am %{time}"
+  notice_order_approved: "Die Bestellung wurde freigegeben."
+  notice_order_already_approved: "Die Bestellung wurde bereits freigegeben."
+  label_order_login_to_approve: "Zum Freigeben bitte anmelden"
