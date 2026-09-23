@@ -17,6 +17,7 @@ module HangoutsChat
         :author => issue.author.to_s,
         :action => "created",
         :link => object_url(issue),
+        :approval_link => approval_link(issue),
         :subject => issue.to_s,
         :mentions => mentions(issue.description)
       }
@@ -70,6 +71,7 @@ module HangoutsChat
         :author => journal.user.to_s,
         :action => "updated",
         :link => object_url(issue),
+        :approval_link => approval_link(issue),
         :subject => issue.to_s,
         :mentions => mentions(journal.notes)
       }
@@ -107,6 +109,7 @@ module HangoutsChat
         :author => (journal ? journal.user : changeset.user).to_s,
         :action => "updated",
         :link => object_url(issue),
+        :approval_link => approval_link(issue),
         :subject => issue.to_s
       }
 
@@ -190,6 +193,7 @@ module HangoutsChat
       buttons = []
       buttons << text_button("OPEN ISSUE", msg[:link]) if msg[:link]
       buttons << text_button("OPEN PROJECT", msg[:project_link]) if msg[:project_link]
+      buttons << text_button("FREIGEBEN", msg[:approval_link]) if msg[:approval_link]
       sections += [{ :widgets => [{ :buttonList => { :buttons => buttons } }] }] if buttons.any?
 
       # header texts are plain text in cardsV2, so they must not be html-escaped
@@ -233,6 +237,12 @@ module HangoutsChat
           }
         }
       }
+    end
+
+    # leads to the approval button on the issue page; approving itself needs a logged-in user
+    def approval_link(issue)
+      return nil unless OrderApproval.applicable?(issue) && OrderApproval.approval_journal(issue).nil?
+      "#{object_url(issue)}#order-approval"
     end
 
     def decorated_text(icon, label, content, multiline = false)

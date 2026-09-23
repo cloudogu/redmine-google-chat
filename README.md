@@ -28,6 +28,13 @@ named `Hangouts Chat Thread`. If no custom thread is defined for a project, the 
 project will be checked (or the default will be used). To prevent all notifications
 from being sent for a project, set the custom thread to `-`.
 
+## Order approval
+
+Issues whose subject contains `Bestellung` (case-insensitive) show a *Freigeben* button
+below the issue details. Clicking it adds the note `ist freigegeben`, authored by the
+logged-in user. Once approved, the button is replaced by the approver and date. Anyone
+allowed to add notes to the issue can approve it.
+
 For more information, see http://www.redmine.org/projects/redmine/wiki/Plugins.
 
 This is based on redmine slack plugin https://github.com/patope/redmine-google-chat

@@ -21,5 +21,6 @@ end
 
 Issue.send(:include, HangoutsChat::IssuePatch)
 
-# load the listener explicitly, otherwise its hooks are only registered when eager loading is enabled
+# load the hooks explicitly, otherwise they are only registered when eager loading is enabled
 HangoutsChat::Listener
+HangoutsChat::OrderApprovalHook
