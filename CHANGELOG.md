@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.4.4] 2025-08-20
+### Fixed
+- [#11] fixes undefined local variable or method `unloadable' in Redmine 6
+
 ## [v0.4.3] 2024-04-22
 ### Fixed
 - Handle Chat URL detection properly and fix errors like the following (#7)

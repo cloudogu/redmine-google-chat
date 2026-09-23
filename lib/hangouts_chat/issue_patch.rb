@@ -5,7 +5,9 @@ module HangoutsChat
 			base.send(:include, InstanceMethods)
 
 			base.class_eval do
-				unloadable # Send unloadable so it will not be unloaded in development
+				if defined?(Rails) && Rails::VERSION::MAJOR < 7
+					unloadable  # only for Rails 6.x and older
+				end
 				after_create :create_from_issue
 				after_save :save_from_issue
 			end
