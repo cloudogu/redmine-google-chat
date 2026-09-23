@@ -5,7 +5,7 @@ Redmine::Plugin.register :redmine_hangouts_chat do
 	author 'Samuel Cormier-Iijima'
 	url 'https://github.com/cloudogu/redmine-google-chat'
 	description 'Google Chat integration'
-	version '0.4.4'
+	version '0.5.0'
 
 	requires_redmine :version_or_higher => '0.8.0'
 
@@ -20,3 +20,6 @@ Redmine::Plugin.register :redmine_hangouts_chat do
 end
 
 Issue.send(:include, HangoutsChat::IssuePatch)
+
+# load the listener explicitly, otherwise its hooks are only registered when eager loading is enabled
+HangoutsChat::Listener
