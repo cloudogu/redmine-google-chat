@@ -5,7 +5,7 @@ module HangoutsChat
     def redmine_hangouts_chat_issues_new_after_save(context = {})
       issue = context[:issue]
 
-      thread = thread_for_project issue.project
+      thread = issue_thread issue
       url = url_for_project issue.project
 
       return unless thread
@@ -58,7 +58,7 @@ module HangoutsChat
       issue = context[:issue]
       journal = context[:journal]
 
-      thread = thread_for_project issue.project
+      thread = issue_thread issue
       url = url_for_project issue.project
 
       return unless thread and Setting.plugin_redmine_hangouts_chat['post_updates'] == '1'
@@ -100,7 +100,7 @@ module HangoutsChat
       journal = issue.current_journal
       changeset = context[:changeset]
 
-      thread = thread_for_project issue.project
+      thread = issue_thread issue
       url = url_for_project issue.project
 
       return unless thread
@@ -305,17 +305,30 @@ module HangoutsChat
     end
 
     def thread_for_project(proj)
+      val = configured_thread proj
+      # Channel name '-' is reserved for NOT notifying
+      val.to_s == '-' ? nil : val
+    end
+
+    # thread of the project, its parents or the default, including '-'
+    def configured_thread(proj)
       return nil if proj.blank?
 
-      val = [
+      [
         project_setting(proj, "Thread"),
         (thread_for_project proj.parent),
         Setting.plugin_redmine_hangouts_chat['thread'],
       ].find { |v| v.present? }
+    end
 
-      # Channel name '-' is reserved for NOT notifying
-      return nil if val.to_s == '-'
-      val
+    # thread for messages about the issue; nil disables them. With "One Thread per Issue"
+    # each issue gets a thread "<thread>-issue-<id>", which does not need a thread to be set
+    def issue_thread(issue)
+      return thread_for_project(issue.project) unless Setting.plugin_redmine_hangouts_chat['thread_per_issue'] == '1'
+
+      thread = configured_thread issue.project
+      return nil if thread.to_s == '-'
+      "#{thread.presence || 'redmine'}-issue-#{issue.id}"
     end
 
     # value of the project custom field "Google Chat <name>"; the former name

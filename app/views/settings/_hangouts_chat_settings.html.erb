@@ -18,6 +18,16 @@
 </p>
 
 <p>
+	<label for="settings_thread_per_issue">One Thread per Issue?</label>
+	<input type="checkbox" id="settings_thread_per_issue" value="1" name="settings[thread_per_issue]" <%= settings['thread_per_issue'] == '1' ? 'checked="checked"' : '' %> />
+</p>
+
+<p>
+	Posts all messages about an issue to a thread of its own named "&lt;thread&gt;-issue-&lt;id&gt;" instead of the project thread.
+	Without a thread, it is named "redmine-issue-&lt;id&gt;"; a project thread "-" still disables the messages. Wiki updates stay in the project thread.
+</p>
+
+<p>
 	<label for="settings_username">Google Chat Username</label>
 	<input type="text" id="settings_username" value="<%= settings['username'] %>" name="settings[username]" />
 </p>

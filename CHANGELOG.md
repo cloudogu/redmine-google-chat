@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Approve orders: issues whose subject contains "Bestellung" get an approval button which adds the note "ist freigegeben" as the current user
 - Chat messages about orders which are not approved yet get a "FREIGEBEN" button leading to the approval button in Redmine
 - Setting "Ignored Fields" to leave changes of certain fields out of update messages; updates which only change ignored fields are not sent at all
+- Setting "One Thread per Issue" to post all messages about an issue to a thread of its own
 ### Changed
 - Send messages in the Google Chat `cardsV2` format; the deprecated `cards` format is no longer used
 - Reply to threads via `messageReplyOption` and `thread.threadKey` instead of the deprecated `thread_key` URL parameter

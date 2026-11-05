@@ -28,6 +28,12 @@ named `Google Chat Thread`. If no custom thread is defined for a project, the pa
 project will be checked (or the default will be used). To prevent all notifications
 from being sent for a project, set the custom thread to `-`.
 
+To get one thread per issue instead, enable *One Thread per Issue?* in the plugin
+configuration. All messages about an issue then go to a thread of its own, which the first
+message about the issue starts. The thread is named `<thread>-issue-<id>` after the thread
+described above, or `redmine-issue-<id>` if no thread is set. A thread `-` still disables the
+messages of a project. Wiki updates stay in the project thread.
+
 ## Ignored fields
 
 Changes to some fields can be left out of the update messages. Under the plugin
