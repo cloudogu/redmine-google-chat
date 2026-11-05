@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Send messages in the Google Chat `cardsV2` format; the deprecated `cards` format is no longer used
 - Reply to threads via `messageReplyOption` and `thread.threadKey` instead of the deprecated `thread_key` URL parameter
 - Wiki update messages only contain the "OPEN PROJECT" button
+- Rename "Hangouts Chat" to "Google Chat" in the settings
 ### Fixed
 - Do not write the webhook `key` and `token` to the log; anybody with the log could post into the chat space
 - Load the hook listener explicitly; without eager loading (e.g. in development mode) no notifications were sent

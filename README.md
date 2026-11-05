@@ -24,7 +24,7 @@ Incoming WebHook integration in your Google account. (https://developers.google.
 
 You can also group messages to threads on a per-project basis. To
 do this, create a project custom field (Administration > Custom fields > Project)
-named `Hangouts Chat Thread`. If no custom thread is defined for a project, the parent
+named `Google Chat Thread`. If no custom thread is defined for a project, the parent
 project will be checked (or the default will be used). To prevent all notifications
 from being sent for a project, set the custom thread to `-`.
 

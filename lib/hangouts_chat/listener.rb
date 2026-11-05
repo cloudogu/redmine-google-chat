@@ -48,8 +48,8 @@ module HangoutsChat
 
       Rails.logger.info("found google chat ticket to url #{redact url}")
       Rails.logger.debug("thread #{thread}")
-      Rails.logger.debug("g. hangout chat url #{redact Setting.plugin_redmine_hangouts_chat['hangouts_chat_url']}")
-      Rails.logger.debug("g. hangout chat thr #{Setting.plugin_redmine_hangouts_chat['thread']}")
+      Rails.logger.debug("google chat url #{redact Setting.plugin_redmine_hangouts_chat['hangouts_chat_url']}")
+      Rails.logger.debug("google chat thread #{Setting.plugin_redmine_hangouts_chat['thread']}")
 
       return true
     end
@@ -297,10 +297,8 @@ module HangoutsChat
     def url_for_project(proj)
       return nil if proj.blank?
 
-      cf = ProjectCustomField.find_by_name("Hangouts Chat URL")
-
       [
-        (proj.custom_value_for(cf).value rescue nil),
+        project_setting(proj, "URL"),
         (url_for_project proj.parent),
         Setting.plugin_redmine_hangouts_chat['hangouts_chat_url'],
       ].find { |v| v.present? }
@@ -309,10 +307,8 @@ module HangoutsChat
     def thread_for_project(proj)
       return nil if proj.blank?
 
-      cf = ProjectCustomField.find_by_name("Hangouts Chat Thread")
-
       val = [
-        (proj.custom_value_for(cf).value rescue nil),
+        project_setting(proj, "Thread"),
         (thread_for_project proj.parent),
         Setting.plugin_redmine_hangouts_chat['thread'],
       ].find { |v| v.present? }
@@ -320,6 +316,17 @@ module HangoutsChat
       # Channel name '-' is reserved for NOT notifying
       return nil if val.to_s == '-'
       val
+    end
+
+    # value of the project custom field "Google Chat <name>"; the former name
+    # "Hangouts Chat <name>" is still supported
+    def project_setting(proj, name)
+      ["Google Chat #{name}", "Hangouts Chat #{name}"].each do |field_name|
+        cf = ProjectCustomField.find_by_name(field_name)
+        value = (proj.custom_value_for(cf).value rescue nil) if cf
+        return value if value.present?
+      end
+      nil
     end
 
     def field_key_and_title(detail)
