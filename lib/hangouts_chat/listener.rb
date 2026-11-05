@@ -8,7 +8,7 @@ module HangoutsChat
       thread = issue_thread issue
       url = url_for_project issue.project
 
-      return unless thread
+      return if notifications_disabled? issue.project
       return if issue.is_private?
       return unless should_chat_message_be_sent(thread, url)
 
@@ -61,7 +61,8 @@ module HangoutsChat
       thread = issue_thread issue
       url = url_for_project issue.project
 
-      return unless thread and Setting.plugin_redmine_hangouts_chat['post_updates'] == '1'
+      return if notifications_disabled? issue.project
+      return unless Setting.plugin_redmine_hangouts_chat['post_updates'] == '1'
       return if issue.is_private?
       return if journal.private_notes?
 
@@ -103,7 +104,7 @@ module HangoutsChat
       thread = issue_thread issue
       url = url_for_project issue.project
 
-      return unless thread
+      return if notifications_disabled? issue.project
       return if issue.is_private?
       return unless should_chat_message_be_sent(thread, url)
 
@@ -175,7 +176,7 @@ module HangoutsChat
       thread = thread_for_project project
       url = url_for_project project
 
-      return unless thread
+      return if notifications_disabled? project
       return unless should_chat_message_be_sent(thread, url)
 
       sections = []
@@ -304,31 +305,38 @@ module HangoutsChat
       ].find { |v| v.present? }
     end
 
-    def thread_for_project(proj)
-      val = configured_thread proj
-      # Channel name '-' is reserved for NOT notifying
-      val.to_s == '-' ? nil : val
+    # Channel name '-' is reserved for NOT notifying
+    DISABLED_THREAD = '-'
+
+    def notifications_disabled?(proj)
+      configured_thread(proj).to_s == DISABLED_THREAD
     end
 
-    # thread of the project, its parents or the default, including '-'
+    # thread of the project; without one, every message is posted on its own
+    def thread_for_project(proj)
+      val = configured_thread proj
+      val.to_s == DISABLED_THREAD ? nil : val.presence
+    end
+
+    # thread of the project, its parents or the plugin settings, including '-';
+    # a '-' of a parent project is not inherited
     def configured_thread(proj)
       return nil if proj.blank?
 
+      parent = configured_thread proj.parent
       [
         project_setting(proj, "Thread"),
-        (thread_for_project proj.parent),
+        (parent unless parent.to_s == DISABLED_THREAD),
         Setting.plugin_redmine_hangouts_chat['thread'],
       ].find { |v| v.present? }
     end
 
-    # thread for messages about the issue; nil disables them. With "One Thread per Issue"
-    # each issue gets a thread "<thread>-issue-<id>", which does not need a thread to be set
+    # thread for messages about the issue. With "One Thread per Issue" each issue gets
+    # a thread "<thread>-issue-<id>", or "redmine-issue-<id>" without a thread
     def issue_thread(issue)
-      return thread_for_project(issue.project) unless Setting.plugin_redmine_hangouts_chat['thread_per_issue'] == '1'
-
-      thread = configured_thread issue.project
-      return nil if thread.to_s == '-'
-      "#{thread.presence || 'redmine'}-issue-#{issue.id}"
+      thread = thread_for_project issue.project
+      return thread unless Setting.plugin_redmine_hangouts_chat['thread_per_issue'] == '1'
+      "#{thread || 'redmine'}-issue-#{issue.id}"
     end
 
     # value of the project custom field "Google Chat <name>"; the former name

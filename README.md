@@ -25,8 +25,9 @@ Incoming WebHook integration in your Google account. (https://developers.google.
 You can also group messages to threads on a per-project basis. To
 do this, create a project custom field (Administration > Custom fields > Project)
 named `Google Chat Thread`. If no custom thread is defined for a project, the parent
-project will be checked (or the default will be used). To prevent all notifications
-from being sent for a project, set the custom thread to `-`.
+project will be checked (or the default will be used). Without any thread, every message is
+posted on its own. To prevent all notifications from being sent for a project, set the
+custom thread to `-`.
 
 To get one thread per issue instead, enable *One Thread per Issue?* in the plugin
 configuration. All messages about an issue then go to a thread of its own, which the first
