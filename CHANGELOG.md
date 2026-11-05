@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Wiki update messages only contain the "OPEN PROJECT" button
 - Rename "Hangouts Chat" to "Google Chat" in the settings
 - Without a thread, every message is posted on its own instead of not being sent at all; the thread "-" still disables the messages of a project
+### Removed
+- Setting "Google Chat Username"; it had no effect, as Google Chat takes the sender name from the webhook
 ### Fixed
 - Links to create a project custom field on the settings page also work when Redmine runs under a sub path like `/redmine`
 - Do not write the webhook `key` and `token` to the log; anybody with the log could post into the chat space
