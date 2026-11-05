@@ -28,6 +28,13 @@ named `Hangouts Chat Thread`. If no custom thread is defined for a project, the 
 project will be checked (or the default will be used). To prevent all notifications
 from being sent for a project, set the custom thread to `-`.
 
+## Ignored fields
+
+Changes to some fields can be left out of the update messages. Under the plugin
+configuration, list them in *Ignored Fields*, one per line: the name of a custom field
+or of an issue attribute. Names are matched case-insensitively. 
+An update which only changes ignored fields and has no notes sends no message at all.
+
 ## Order approval
 
 Issues whose subject contains `Bestellung` (case-insensitive) show a *Freigeben* button

@@ -39,3 +39,12 @@
 	<label for="settings_post_wiki_updates">Post Wiki Updates?</label>
 	<input type="checkbox" id="settings_post_wiki_updates" value="1" name="settings[post_wiki_updates]" <%= settings['post_wiki_updates'] == '1' ? 'checked="checked"' : '' %> />
 </p>
+
+<p>
+	<label for="settings_ignored_fields">Ignored Fields</label>
+	<textarea id="settings_ignored_fields" rows="4" cols="40" name="settings[ignored_fields]"><%= settings['ignored_fields'] %></textarea>
+</p>
+
+<p>
+	Changes to these fields are not posted, one field per line. Use the name of a custom field or of an issue attribute. Updates which only change ignored fields and have no notes are not sent at all.
+</p>

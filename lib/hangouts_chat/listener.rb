@@ -64,6 +64,13 @@ module HangoutsChat
       return unless thread and Setting.plugin_redmine_hangouts_chat['post_updates'] == '1'
       return if issue.is_private?
       return if journal.private_notes?
+
+      details = journal.details.reject { |d| ignored_field? d }
+      if details.empty? && journal.notes.blank?
+        Rails.logger.debug("not sending google chat message for #{issue} because only ignored fields changed")
+        return
+      end
+
       return unless should_chat_message_be_sent(thread, url)
 
       msg = {
@@ -78,7 +85,7 @@ module HangoutsChat
 
       sections = []
 
-      fields = journal.details.map { |d| detail_to_field d }
+      fields = details.map { |d| detail_to_field d }
       sections << { :widgets => fields } if fields.size > 0
 
       sections << {
@@ -148,9 +155,10 @@ module HangoutsChat
         }
       ]
 
-      fields = issue.changes.except('updated_on', 'lock_version').map do |attr, (_old, new)|
-        detail_to_field JournalDetail.new(:property => 'attr', :prop_key => attr, :value => new)
-      end
+      fields = issue.changes.except('updated_on', 'lock_version')
+        .map { |attr, (_old, new)| JournalDetail.new(:property => 'attr', :prop_key => attr, :value => new) }
+        .reject { |detail| ignored_field? detail }
+        .map { |detail| detail_to_field detail }
       sections << { :widgets => fields } if fields.size > 0
 
       speak msg, thread, sections, url
@@ -314,7 +322,7 @@ module HangoutsChat
       val
     end
 
-    def detail_to_field(detail)
+    def field_key_and_title(detail)
       if detail.property == "cf"
         key = CustomField.find(detail.prop_key).name rescue nil
         title = key
@@ -331,6 +339,26 @@ module HangoutsChat
           title = I18n.t "field_#{key}"
         end
       end
+      [key, title]
+    end
+
+    # names (custom field names, attribute names or their labels) of fields whose changes are not posted
+    def ignored_fields
+      Setting.plugin_redmine_hangouts_chat['ignored_fields'].to_s
+        .split(/\r?\n/).map { |name| name.strip.downcase }.reject(&:empty?)
+    end
+
+    def ignored_field?(detail)
+      ignored = ignored_fields
+      return false if ignored.empty?
+      names = field_key_and_title(detail)
+      # also accept attribute names as the REST API lists them, e.g. "priority_id"
+      names << detail.prop_key.to_s if detail.property == "attr"
+      names.compact.any? { |name| ignored.include? name.to_s.strip.downcase }
+    end
+
+    def detail_to_field(detail)
+      key, title = field_key_and_title(detail)
 
       short = true
       value = detail.value.to_s
