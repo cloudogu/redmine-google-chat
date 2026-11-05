@@ -51,4 +51,13 @@ allowed to add notes to the issue can approve it.
 
 For more information, see http://www.redmine.org/projects/redmine/wiki/Plugins.
 
-This is based on redmine slack plugin https://github.com/patope/redmine-google-chat
+## Credits
+
+This plugin is maintained by Cloudogu GmbH and builds on two earlier versions:
+
+- [redmine-slack](https://github.com/sciyoshi/redmine-slack) by Samuel Cormier-Iijima, the
+  original plugin which posted Redmine updates to Slack
+- [redmine-google-chat](https://github.com/patope/redmine-google-chat) by Tomi Pakarinen, who
+  adapted it to Google Chat
+
+Many thanks to both authors for their work, on which this plugin is still based.

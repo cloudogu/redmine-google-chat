@@ -2,9 +2,11 @@ require 'redmine'
 
 Redmine::Plugin.register :redmine_hangouts_chat do
 	name 'Redmine Google Chat'
-	author 'Samuel Cormier-Iijima'
+	author 'Cloudogu GmbH, based on the work of Samuel Cormier-Iijima and Tomi Pakarinen'
+	author_url 'https://cloudogu.com'
 	url 'https://github.com/cloudogu/redmine-google-chat'
-	description 'Google Chat integration'
+	description 'Posts new issues, issue updates and wiki updates to Google Chat spaces via incoming webhooks, ' \
+		'with a space and thread per project or a thread per issue, ignored fields and order approval'
 	version '0.5.0'
 
 	requires_redmine :version_or_higher => '0.8.0'
