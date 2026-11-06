@@ -2,25 +2,29 @@ require 'httpclient'
 
 module HangoutsChat
   class Listener < Redmine::Hook::Listener
+    # Thread name '-' is reserved for NOT notifying
+    DISABLED_THREAD = '-'
+
+    # attributes whose value is the id of a record, shown by the name of the record
+    RECORD_ATTRIBUTES = {
+      "tracker" => "Tracker",
+      "project" => "Project",
+      "status" => "IssueStatus",
+      "priority" => "IssuePriority",
+      "category" => "IssueCategory",
+      "assigned_to" => "User",
+      "fixed_version" => "Version"
+    }.freeze
+
+    # attributes whose value is shown on several lines
+    LONG_ATTRIBUTES = %w[title subject description].freeze
+
     def redmine_hangouts_chat_issues_new_after_save(context = {})
       issue = context[:issue]
-
-      thread = issue_thread issue
-      url = url_for_project issue.project
-
-      return if notifications_disabled? issue.project
       return if issue.is_private?
-      return unless should_chat_message_be_sent(thread, url)
 
-      msg = {
-        :project_name => issue.project,
-        :author => issue.author.to_s,
-        :action => "created",
-        :link => object_url(issue),
-        :approval_link => approval_link(issue),
-        :subject => issue.to_s,
-        :mentions => mentions(issue.description)
-      }
+      url = chat_url issue.project
+      return unless url
 
       widgets = [
         decorated_text("PERSON", I18n.t("field_author"), issue.author.to_s),
@@ -28,178 +32,98 @@ module HangoutsChat
         decorated_text("BOOKMARK", I18n.t("field_status"), issue.status.to_s),
         decorated_text("CLOCK", I18n.t("field_priority"), issue.priority.to_s)
       ]
-
       widgets << decorated_text("PERSON", I18n.t("field_assigned_to"), issue.assigned_to.to_s) if issue.assigned_to
-
-      widgets << decorated_text("MULTIPLE_PEOPLE", I18n.t("field_watcher"), issue.watcher_users.join(', ')) if ProjectSettings.enabled?(issue.project, "Display Watchers", 'display_watchers') and issue.watcher_users.length > 0
-
-      speak msg, thread, [{ :widgets => widgets }], url
-    end
-
-    def should_chat_message_be_sent(thread, url)
-      unless url
-        Rails.logger.debug("ending interacting with google chat because url is #{url}")
-        return false
-      end
-      unless url.start_with?("http")
-        Rails.logger.debug("ending interacting with google chat because #{redact url} does not seem to contain a valid URL")
-        return false
+      if ProjectSettings.enabled?(issue.project, 'display_watchers') && issue.watcher_users.any?
+        widgets << decorated_text("MULTIPLE_PEOPLE", I18n.t("field_watcher"), issue.watcher_users.join(', '))
       end
 
-      Rails.logger.info("found google chat ticket to url #{redact url}")
-      Rails.logger.debug("thread #{thread}")
-      Rails.logger.debug("google chat url #{redact Setting.plugin_redmine_hangouts_chat['hangouts_chat_url']}")
-      Rails.logger.debug("google chat thread #{Setting.plugin_redmine_hangouts_chat['thread']}")
-
-      return true
+      msg = issue_message(issue, issue.author, "created", issue.description)
+      speak msg, issue_thread(issue), [{ :widgets => widgets }], url
     end
 
     def redmine_hangouts_chat_issues_edit_after_save(context = {})
       issue = context[:issue]
       journal = context[:journal]
+      return if issue.is_private? || journal.private_notes?
+      return unless ProjectSettings.enabled?(issue.project, 'post_updates')
 
-      thread = issue_thread issue
-      url = url_for_project issue.project
+      url = chat_url issue.project
+      return unless url
 
-      return if notifications_disabled? issue.project
-      return unless ProjectSettings.enabled?(issue.project, "Post Issue Updates", 'post_updates')
-      return if issue.is_private?
-      return if journal.private_notes?
-
-      ignored = ignored_fields issue.project
-      details = journal.details.reject { |d| ignored_field?(d, ignored) }
-      if details.empty? && journal.notes.blank?
+      sections = []
+      fields = detail_fields(issue.project, journal.details)
+      sections << { :widgets => fields } if fields.any?
+      sections << { :widgets => [text_paragraph(journal.notes)] } if journal.notes.present?
+      if sections.empty?
         Rails.logger.debug("not sending google chat message for #{issue} because only ignored fields changed")
         return
       end
 
-      return unless should_chat_message_be_sent(thread, url)
-
-      msg = {
-        :project_name => issue.project,
-        :author => journal.user.to_s,
-        :action => "updated",
-        :link => object_url(issue),
-        :approval_link => approval_link(issue),
-        :subject => issue.to_s,
-        :mentions => mentions(journal.notes)
-      }
-
-      sections = []
-
-      fields = details.map { |d| detail_to_field d }
-      sections << { :widgets => fields } if fields.size > 0
-
-      sections << {
-        :widgets => [text_paragraph(journal.notes)]
-      } if journal.notes.present?
-
-      speak msg, thread, sections, url
+      msg = issue_message(issue, journal.user, "updated", journal.notes)
+      speak msg, issue_thread(issue), sections, url
     end
 
     def model_changeset_scan_commit_for_issue_ids_pre_issue_update(context = {})
       issue = context[:issue]
-      journal = issue.current_journal
       changeset = context[:changeset]
-
-      thread = issue_thread issue
-      url = url_for_project issue.project
-
-      return if notifications_disabled? issue.project
       return if issue.is_private?
-      return unless should_chat_message_be_sent(thread, url)
+
+      url = chat_url issue.project
+      return unless url
 
       # Redmine saves the issue itself right after this hook. The changes are
       # reported here, so the following edit notification is suppressed.
       issue.skip_hangouts_chat_notification = true
 
-      msg = {
-        :project_name => issue.project,
-        :author => (journal ? journal.user : changeset.user).to_s,
-        :action => "updated",
-        :link => object_url(issue),
-        :approval_link => approval_link(issue),
-        :subject => issue.to_s
-      }
-
       repository = changeset.repository
+      revision_url = Rails.application.routes.url_for(url_options.merge(
+        :controller => 'repositories',
+        :action => 'revision',
+        :id => repository.project,
+        :repository_id => repository.identifier_param,
+        :rev => changeset.revision
+      ))
+      revision_link = "<a href=\"#{revision_url}\">#{escape changeset.comments}</a>"
+      sections = [{
+        :widgets => [text_paragraph(ll(Setting.default_language, :text_status_changed_by_changeset, revision_link), false)]
+      }]
 
-      if Setting.host_name.to_s =~ /\A(https?\:\/\/)?(.+?)(\:(\d+))?(\/.+)?\z/i
-        host, port, prefix = $2, $4, $5
-        revision_url = Rails.application.routes.url_for(
-          :controller => 'repositories',
-          :action => 'revision',
-          :id => repository.project,
-          :repository_id => repository.identifier_param,
-          :rev => changeset.revision,
-          :host => host,
-          :protocol => Setting.protocol,
-          :port => port,
-          :script_name => prefix
-        )
-      else
-        revision_url = Rails.application.routes.url_for(
-          :controller => 'repositories',
-          :action => 'revision',
-          :id => repository.project,
-          :repository_id => repository.identifier_param,
-          :rev => changeset.revision,
-          :host => Setting.host_name,
-          :protocol => Setting.protocol
-        )
+      changes = issue.changes.except('updated_on', 'lock_version').map do |attr, (_old, new)|
+        JournalDetail.new(:property => 'attr', :prop_key => attr, :value => new)
       end
+      fields = detail_fields(issue.project, changes)
+      sections << { :widgets => fields } if fields.any?
 
-      sections = [
-        {
-          :widgets => [
-            text_paragraph(ll(Setting.default_language, :text_status_changed_by_changeset, "<a href=\"#{revision_url}\">#{escape changeset.comments}</a>"), false)
-          ]
-        }
-      ]
-
-      ignored = ignored_fields issue.project
-      fields = issue.changes.except('updated_on', 'lock_version')
-        .map { |attr, (_old, new)| JournalDetail.new(:property => 'attr', :prop_key => attr, :value => new) }
-        .reject { |detail| ignored_field?(detail, ignored) }
-        .map { |detail| detail_to_field detail }
-      sections << { :widgets => fields } if fields.size > 0
-
-      speak msg, thread, sections, url
+      journal = issue.current_journal
+      msg = issue_message(issue, journal ? journal.user : changeset.user, "updated")
+      speak msg, issue_thread(issue), sections, url
     end
 
     def controller_wiki_edit_after_save(context = {})
       project = context[:project]
       page = context[:page]
+      return unless ProjectSettings.enabled?(project, 'post_wiki_updates')
 
-      return unless ProjectSettings.enabled?(project, "Post Wiki Updates", 'post_wiki_updates')
-
-      user = page.content.author
-
-      thread = thread_for_project project
-      url = url_for_project project
-
-      return if notifications_disabled? project
-      return unless should_chat_message_be_sent(thread, url)
+      url = chat_url project
+      return unless url
 
       sections = []
-      sections << {
-        :widgets => [text_paragraph(page.content.comments)]
-      } if page.content.comments.present?
+      sections << { :widgets => [text_paragraph(page.content.comments)] } if page.content.comments.present?
 
       msg = {
         :project_name => project,
-        :author => user.to_s,
+        :author => page.content.author.to_s,
         :action => "updated",
         :subject => page.pretty_title,
         :project_link => object_url(project)
       }
-
-      speak msg, thread, sections, url
+      speak msg, thread_for_project(project), sections, url
     end
 
-    def speak(msg, thread, sections = [], url = nil)
-      url = Setting.plugin_redmine_hangouts_chat['hangouts_chat_url'] unless url
-      url = url + '&messageReplyOption=REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD' if thread
+    private
+
+    def speak(msg, thread, sections, url)
+      url += '&messageReplyOption=REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD' if thread
 
       buttons = []
       buttons << text_button("OPEN ISSUE", msg[:link]) if msg[:link]
@@ -221,6 +145,7 @@ module HangoutsChat
       }
       params[:thread] = { :threadKey => thread } if thread
 
+      Rails.logger.info("sending google chat message to #{redact url}#{" in thread #{thread}" if thread}")
       begin
         client = HTTPClient.new
         client.ssl_config.cert_store.set_default_paths
@@ -232,7 +157,29 @@ module HangoutsChat
       end
     end
 
-    private
+    # webhook url for the messages of the project, nil if they are not posted
+    def chat_url(project)
+      return nil if notifications_disabled? project
+
+      url = ProjectSettings.value(project, 'hangouts_chat_url')
+      unless url.to_s.start_with?("http")
+        Rails.logger.debug("not sending google chat message because #{redact url.inspect} is no valid URL")
+        return nil
+      end
+      url
+    end
+
+    def issue_message(issue, author, action, text = nil)
+      {
+        :project_name => issue.project,
+        :author => author.to_s,
+        :action => action,
+        :link => object_url(issue),
+        :approval_link => approval_link(issue),
+        :subject => issue.to_s,
+        :mentions => mentions(text)
+      }
+    end
 
     # the webhook url contains credentials which allow anybody to post into the space
     def redact(text)
@@ -252,8 +199,7 @@ module HangoutsChat
 
     # leads to the approval button on the issue page; approving itself needs a logged-in user
     def approval_link(issue)
-      return nil unless OrderApproval.applicable?(issue) && OrderApproval.approval_journal(issue).nil?
-      "#{object_url(issue)}#order-approval"
+      "#{object_url(issue)}#order-approval" if OrderApproval.pending?(issue)
     end
 
     def decorated_text(icon, label, content, multiline = false)
@@ -278,33 +224,18 @@ module HangoutsChat
       CGI.escapeHTML msg.to_s
     end
 
-    def object_url(obj)
+    # host, port and sub path of Redmine for links in the messages
+    def url_options
       if Setting.host_name.to_s =~ /\A(https?:\/\/)?(.+?)(:(\d+))?(\/.+)?\z/i
-        host, port, prefix = $2, $4, $5
-        Rails.application.routes.url_for(obj.event_url(
-          {
-            :host => host,
-            :protocol => Setting.protocol,
-            :port => port,
-            :script_name => prefix
-          }))
+        { :host => $2, :port => $4, :script_name => $5, :protocol => Setting.protocol }
       else
-        Rails.application.routes.url_for(obj.event_url(
-          {
-            :host => Setting.host_name,
-            :protocol => Setting.protocol
-          }))
+        { :host => Setting.host_name, :protocol => Setting.protocol }
       end
     end
 
-    def url_for_project(proj)
-      return nil if proj.blank?
-
-      ProjectSettings.value(proj, "URL", 'hangouts_chat_url').presence
+    def object_url(obj)
+      Rails.application.routes.url_for(obj.event_url(url_options))
     end
-
-    # Channel name '-' is reserved for NOT notifying
-    DISABLED_THREAD = '-'
 
     def notifications_disabled?(proj)
       configured_thread(proj).to_s == DISABLED_THREAD
@@ -323,9 +254,9 @@ module HangoutsChat
 
       parent = configured_thread proj.parent
       [
-        ProjectSettings.field_value(proj, "Thread"),
+        ProjectSettings.field_value(proj, 'thread'),
         (parent unless parent.to_s == DISABLED_THREAD),
-        Setting.plugin_redmine_hangouts_chat['thread'],
+        ProjectSettings.global('thread'),
       ].find { |v| v.present? }
     end
 
@@ -333,7 +264,7 @@ module HangoutsChat
     # a thread "<thread>-issue-<id>", or "redmine-issue-<id>" without a thread
     def issue_thread(issue)
       thread = thread_for_project issue.project
-      return thread unless ProjectSettings.enabled?(issue.project, "One Thread per Issue", 'thread_per_issue')
+      return thread unless ProjectSettings.enabled?(issue.project, 'thread_per_issue')
       "#{thread || 'redmine'}-issue-#{issue.id}"
     end
 
@@ -357,9 +288,15 @@ module HangoutsChat
       [key, title]
     end
 
+    # card fields for the changes, without the ignored fields
+    def detail_fields(project, details)
+      ignored = ignored_fields project
+      details.reject { |detail| ignored_field?(detail, ignored) }.map { |detail| detail_to_field detail }
+    end
+
     # names (custom field names, attribute names or their labels) of fields whose changes are not posted
     def ignored_fields(project)
-      ProjectSettings.value(project, "Ignored Fields", 'ignored_fields').to_s
+      ProjectSettings.value(project, 'ignored_fields').to_s
         .split(/\r?\n/).map { |name| name.strip.downcase }.reject(&:empty?)
     end
 
@@ -373,52 +310,21 @@ module HangoutsChat
 
     def detail_to_field(detail)
       key, title = field_key_and_title(detail)
-
-      short = true
       value = detail.value.to_s
 
-      case key
-      when "title", "subject", "description"
-        short = false
-      when "tracker"
-        value = (Tracker.find(detail.value) rescue nil).to_s
-      when "project"
-        value = (Project.find(detail.value) rescue nil).to_s
-      when "status"
-        value = (IssueStatus.find(detail.value) rescue nil).to_s
-      when "priority"
-        value = (IssuePriority.find(detail.value) rescue nil).to_s
-      when "category"
-        value = (IssueCategory.find(detail.value) rescue nil).to_s
-      when "assigned_to"
-        value = (User.find(detail.value) rescue nil).to_s
-      when "fixed_version"
-        value = (Version.find(detail.value) rescue nil).to_s
-      when "attachment"
-        attachment = Attachment.find(detail.prop_key) rescue nil
-        value = attachment.filename if attachment
-      when "parent"
-        issue = Issue.find(detail.value) rescue nil
-        value = "#{issue.id}" if issue
+      if key == "attachment"
+        value = Attachment.find_by(:id => detail.prop_key)&.filename || value
+      elsif RECORD_ATTRIBUTES.key?(key)
+        value = RECORD_ATTRIBUTES[key].constantize.find_by(:id => detail.value).to_s
       end
 
-      decorated_text(nil, title, value, !short)
+      decorated_text(nil, title, value, LONG_ATTRIBUTES.include?(key))
     end
 
+    # "@name" mentions in the text, added to the message title
     def mentions(text)
-      return nil if text.nil?
-      names = extract_usernames text
-      names.present? ? "\nTo: " + names.join(', ') : nil
-    end
-
-    def extract_usernames(text = '')
-      if text.nil?
-        text = ''
-      end
-
-      # slack usernames may only contain lowercase letters, numbers,
-      # dashes and underscores and must start with a letter or number.
-      text.scan(/@[a-z\d][a-z\d_\-]*/).uniq
+      names = text.to_s.scan(/@[a-z\d][a-z\d_\-]*/).uniq
+      names.any? ? "\nTo: " + names.join(', ') : nil
     end
   end
 end

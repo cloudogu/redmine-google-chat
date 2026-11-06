@@ -13,7 +13,6 @@ Redmine::Plugin.register :redmine_hangouts_chat do
 
 	settings \
 		:default => {
-			'callback_url' => 'https://chat.googleapis.com/v1/',
 			'thread' => nil,
 			'display_watchers' => 'no',
 			'ignored_fields' => ''

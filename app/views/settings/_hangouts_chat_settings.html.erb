@@ -7,14 +7,14 @@
 </p>
 
 <p>
-	<label for="settings_hangouts_chat_url">Google Chat URL</label>
-	<input type="text" id="settings_hangouts_chat_url" size="80" value="<%= settings['hangouts_chat_url'] %>" name="settings[hangouts_chat_url]" />
+	<%= label_tag 'settings[hangouts_chat_url]', 'Google Chat URL' %>
+	<%= text_field_tag 'settings[hangouts_chat_url]', settings['hangouts_chat_url'], :size => 80 %>
 	<em class="info">Webhook URL of the Google Chat space.</em>
 </p>
 
 <p>
-	<label for="settings_thread">Google Chat Thread</label>
-	<input type="text" id="settings_thread" value="<%= settings['thread'] %>" name="settings[thread]" />
+	<%= label_tag 'settings[thread]', 'Google Chat Thread' %>
+	<%= text_field_tag 'settings[thread]', settings['thread'] %>
 	<em class="info">
 		Without a thread, every message is posted on its own.
 		The thread "-" disables the messages; in a project, not those of its subprojects.
@@ -22,8 +22,8 @@
 </p>
 
 <p>
-	<label for="settings_thread_per_issue">One Thread per Issue?</label>
-	<input type="checkbox" id="settings_thread_per_issue" value="1" name="settings[thread_per_issue]" <%= settings['thread_per_issue'] == '1' ? 'checked="checked"' : '' %> />
+	<%= label_tag 'settings[thread_per_issue]', 'One Thread per Issue?' %>
+	<%= check_box_tag 'settings[thread_per_issue]', '1', settings['thread_per_issue'] == '1' %>
 	<em class="info">
 		Posts all messages about an issue to the thread "&lt;thread&gt;-issue-&lt;id&gt;", or "redmine-issue-&lt;id&gt;" without a thread.
 		Wiki updates stay in the thread.
@@ -31,28 +31,25 @@
 </p>
 
 <p>
-	<label for="settings_display_watchers">Display Watchers?</label>
-	<select id="settings_display_watchers" name="settings[display_watchers]">
-		<option value="yes" <%= settings['display_watchers'] == 'yes' ? 'selected="selected"' : '' %>>Yes</option>
-		<option value="no" <%= settings['display_watchers'] != 'yes' ? 'selected="selected"' : '' %>>No</option>
-	</select>
+	<%= label_tag 'settings[display_watchers]', 'Display Watchers?' %>
+	<%= select_tag 'settings[display_watchers]', options_for_select([['Yes', 'yes'], ['No', 'no']], settings['display_watchers'] == 'yes' ? 'yes' : 'no') %>
 	<em class="info">Lists the watchers in messages about new issues.</em>
 </p>
 
 <p>
-	<label for="settings_post_updates">Post Issue Updates?</label>
-	<input type="checkbox" id="settings_post_updates" value="1" name="settings[post_updates]" <%= settings['post_updates'] == '1' ? 'checked="checked"' : '' %> />
+	<%= label_tag 'settings[post_updates]', 'Post Issue Updates?' %>
+	<%= check_box_tag 'settings[post_updates]', '1', settings['post_updates'] == '1' %>
 	<em class="info">New issues are always posted.</em>
 </p>
 
 <p>
-	<label for="settings_post_wiki_updates">Post Wiki Updates?</label>
-	<input type="checkbox" id="settings_post_wiki_updates" value="1" name="settings[post_wiki_updates]" <%= settings['post_wiki_updates'] == '1' ? 'checked="checked"' : '' %> />
+	<%= label_tag 'settings[post_wiki_updates]', 'Post Wiki Updates?' %>
+	<%= check_box_tag 'settings[post_wiki_updates]', '1', settings['post_wiki_updates'] == '1' %>
 </p>
 
 <p>
-	<label for="settings_ignored_fields">Ignored Fields</label>
-	<textarea id="settings_ignored_fields" rows="4" cols="40" name="settings[ignored_fields]"><%= settings['ignored_fields'] %></textarea>
+	<%= label_tag 'settings[ignored_fields]', 'Ignored Fields' %>
+	<%= text_area_tag 'settings[ignored_fields]', settings['ignored_fields'], :rows => 4, :cols => 40 %>
 	<em class="info">
 		Changes to these fields are not posted, one field per line. Use the name of a custom field or of an issue attribute.
 		Updates which only change ignored fields and have no notes are not sent at all.
@@ -60,7 +57,7 @@
 </p>
 
 <p>
-	<label for="settings_order_approval">Order Approval?</label>
-	<input type="checkbox" id="settings_order_approval" value="1" name="settings[order_approval]" <%= settings['order_approval'] == '1' ? 'checked="checked"' : '' %> />
+	<%= label_tag 'settings[order_approval]', 'Order Approval?' %>
+	<%= check_box_tag 'settings[order_approval]', '1', settings['order_approval'] == '1' %>
 	<em class="info">Issues whose subject contains "Bestellung" get a button to approve them, and chat messages about them a "Freigeben" button.</em>
 </p>
