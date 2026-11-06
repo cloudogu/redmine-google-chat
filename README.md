@@ -7,9 +7,9 @@ A Redmine plugin that posts new issues, issue updates and wiki updates to
 
 - Messages as Google Chat cards with an **OPEN ISSUE** button
 - Space and thread configurable per project, inherited by subprojects
-- Optionally one thread per issue
+- Optional one thread per issue
 - Ignored fields whose changes are not posted
-- Order approval with a button in Redmine and in the chat
+- Optional order approval with a button in Redmine and in the chat
 - Private issues and private notes are never posted
 
 ## Requirements
@@ -51,6 +51,7 @@ Open *Administration › Plugins › Redmine Google Chat › Configure*.
 | Post Issue Updates?   | Posts issue updates; new issues are always posted                                |
 | Post Wiki Updates?    | Posts wiki updates                                                               |
 | Ignored Fields        | Fields whose changes are not posted, see [Ignored fields](#ignored-fields)       |
+| Order Approval?       | Enables the [order approval](#order-approval)                                    |
 
 ### Per project
 
@@ -60,6 +61,8 @@ settings for a project and its subprojects:
 - `Google Chat URL`: posts the messages of the project to another space
 - `Google Chat Thread`: uses another thread for the project; `-` disables its messages, but
   not those of its subprojects
+- `Google Chat Order Approval` (boolean): enables or disables the order approval for the
+  project; empty uses the setting of the parent project or the plugin
 
 The former names `Hangouts Chat URL` and `Hangouts Chat Thread` still work.
 
@@ -84,6 +87,9 @@ and updates which only change ignored fields and have no notes are not posted at
 Attribute names are listed in the journal `details` of `/issues/<id>.json?include=journals`.
 
 ## Order approval
+
+The order approval is disabled by default. Enable it with *Order Approval?* in the plugin
+settings, or per project with the project custom field `Google Chat Order Approval`.
 
 Issues whose subject contains `Bestellung` (case-insensitive) show a *Freigeben* button below
 the issue details. Clicking it adds the note `ist freigegeben` as the logged-in user. Once

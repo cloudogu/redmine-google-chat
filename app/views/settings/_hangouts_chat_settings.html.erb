@@ -54,3 +54,14 @@
 <p>
 	Changes to these fields are not posted, one field per line. Use the name of a custom field or of an issue attribute. Updates which only change ignored fields and have no notes are not sent at all.
 </p>
+
+<p>
+	<label for="settings_order_approval">Order Approval?</label>
+	<input type="checkbox" id="settings_order_approval" value="1" name="settings[order_approval]" <%= settings['order_approval'] == '1' ? 'checked="checked"' : '' %> />
+</p>
+
+<p>
+	Issues whose subject contains "Bestellung" get a button to approve them, and chat messages about them a "FREIGEBEN" button.
+	It can be enabled or disabled on a per-project basis by creating a boolean
+	<%= link_to "project custom field", new_custom_field_path(:type => "ProjectCustomField") %> named "Google Chat Order Approval" (without quotes).
+</p>

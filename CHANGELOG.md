@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Changed
+- The order approval is disabled by default; enable it with the setting "Order Approval?" or per project with the boolean project custom field "Google Chat Order Approval"
+
 ## [v0.5.0] 2026-11-06
 ### Added
 - Approve orders: issues whose subject contains "Bestellung" get an approval button which adds the note "ist freigegeben" as the current user
