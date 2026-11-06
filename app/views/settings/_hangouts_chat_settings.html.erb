@@ -1,25 +1,31 @@
 <p>
-	<label for="settings_hangouts_chat_url">Hangouts Chat URL</label>
+	<label for="settings_hangouts_chat_url">Google Chat URL</label>
 	<input type="text" id="settings_hangouts_chat_url" size=80 value="<%= settings['hangouts_chat_url'] %>" name="settings[hangouts_chat_url]" />
 </p>
 
 <p>
-	Generate a webhook URL for target the channel. This URL can be changed on a per-project basis by creating a <a href="/custom_fields/new?type=ProjectCustomField">project custom field</a> named "Hangouts Chat URL" (without quotes).
+	Generate a webhook URL for target the channel. This URL can be changed on a per-project basis by creating a <%= link_to "project custom field", new_custom_field_path(:type => "ProjectCustomField") %> named "Google Chat URL" (without quotes).
 </p>
 
 <p>
-	<label for="settings_thread">Hangouts Chat Thread</label>
+	<label for="settings_thread">Google Chat Thread</label>
 	<input type="text" id="settings_thread" value="<%= settings['thread'] %>" name="settings[thread]" />
 </p>
 
 <p>
 	The messages can be threaded a per-project basis by creating a
-	<a href="/custom_fields/new?type=ProjectCustomField">project custom field</a> named "Hangouts Chat Thread" (without quotes).
+	<%= link_to "project custom field", new_custom_field_path(:type => "ProjectCustomField") %> named "Google Chat Thread" (without quotes).
+	Without a thread, every message is posted on its own; the thread "-" disables the messages of a project.
 </p>
 
 <p>
-	<label for="settings_username">Hangouts Chat Username</label>
-	<input type="text" id="settings_username" value="<%= settings['username'] %>" name="settings[username]" />
+	<label for="settings_thread_per_issue">One Thread per Issue?</label>
+	<input type="checkbox" id="settings_thread_per_issue" value="1" name="settings[thread_per_issue]" <%= settings['thread_per_issue'] == '1' ? 'checked="checked"' : '' %> />
+</p>
+
+<p>
+	Posts all messages about an issue to a thread of its own named "&lt;thread&gt;-issue-&lt;id&gt;" instead of the project thread.
+	Without a thread, it is named "redmine-issue-&lt;id&gt;"; a project thread "-" still disables the messages. Wiki updates stay in the project thread.
 </p>
 
 <p>
@@ -38,4 +44,13 @@
 <p>
 	<label for="settings_post_wiki_updates">Post Wiki Updates?</label>
 	<input type="checkbox" id="settings_post_wiki_updates" value="1" name="settings[post_wiki_updates]" <%= settings['post_wiki_updates'] == '1' ? 'checked="checked"' : '' %> />
+</p>
+
+<p>
+	<label for="settings_ignored_fields">Ignored Fields</label>
+	<textarea id="settings_ignored_fields" rows="4" cols="40" name="settings[ignored_fields]"><%= settings['ignored_fields'] %></textarea>
+</p>
+
+<p>
+	Changes to these fields are not posted, one field per line. Use the name of a custom field or of an issue attribute. Updates which only change ignored fields and have no notes are not sent at all.
 </p>

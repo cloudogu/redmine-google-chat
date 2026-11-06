@@ -5,7 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v0.5.0] 2026-11-06
+### Added
+- Approve orders: issues whose subject contains "Bestellung" get an approval button which adds the note "ist freigegeben" as the current user
+- Chat messages about orders which are not approved yet get a "FREIGEBEN" button leading to the approval button in Redmine
+- Setting "Ignored Fields" to leave changes of certain fields out of update messages; updates which only change ignored fields are not sent at all
+- Setting "One Thread per Issue" to post all messages about an issue to a thread of its own
+### Changed
+- Send messages in the Google Chat `cardsV2` format; the deprecated `cards` format is no longer used
+- Reply to threads via `messageReplyOption` and `thread.threadKey` instead of the deprecated `thread_key` URL parameter
+- Wiki update messages only contain the "OPEN PROJECT" button
+- Rename "Hangouts Chat" to "Google Chat" in the settings
+- Without a thread, every message is posted on its own instead of not being sent at all; the thread "-" still disables the messages of a project
+### Removed
+- Setting "Google Chat Username"; it had no effect, as Google Chat takes the sender name from the webhook
+### Fixed
+- Links to create a project custom field on the settings page also work when Redmine runs under a sub path like `/redmine`
+- Do not write the webhook `key` and `token` to the log; anybody with the log could post into the chat space
+- Load the hook listener explicitly; without eager loading (e.g. in development mode) no notifications were sent
+- Validate the chat URL for new issues and wiki updates as well
+- Do not send empty note paragraphs, as Google Chat would not render the whole message
+- Do not save the issue in the changeset hook; this also sent the changeset update twice
 
 ## [v0.4.4] 2025-08-20
 ### Fixed

@@ -8,6 +8,7 @@ module HangoutsChat
 				if defined?(Rails) && Rails::VERSION::MAJOR < 7
 					unloadable  # only for Rails 6.x and older
 				end
+				attr_accessor :skip_hangouts_chat_notification
 				after_create :create_from_issue
 				after_save :save_from_issue
 			end
@@ -24,7 +25,9 @@ module HangoutsChat
 			end
 
 			def save_from_issue
-				if not @create_already_fired
+				if @skip_hangouts_chat_notification
+					@skip_hangouts_chat_notification = false
+				elsif not @create_already_fired
 					Redmine::Hook.call_hook(:redmine_hangouts_chat_issues_edit_after_save, { :issue => self, :journal => self.current_journal}) unless self.current_journal.nil?
 				end
 				return true

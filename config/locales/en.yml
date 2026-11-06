@@ -1,0 +1,6 @@
+en:
+  button_order_approve: "Approve"
+  label_order_approved_by: "Approved by %{user} on %{time}"
+  notice_order_approved: "The order has been approved."
+  notice_order_already_approved: "The order has already been approved."
+  label_order_login_to_approve: "Log in to approve this order"
