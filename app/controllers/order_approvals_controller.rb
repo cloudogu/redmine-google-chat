@@ -2,6 +2,8 @@ class OrderApprovalsController < ApplicationController
   before_action :find_issue
 
   def create
+    return render_404 unless HangoutsChat::OrderApproval.applicable?(@issue)
+
     if HangoutsChat::OrderApproval.approval_journal(@issue)
       flash[:warning] = l(:notice_order_already_approved)
     elsif !HangoutsChat::OrderApproval.approvable?(@issue)

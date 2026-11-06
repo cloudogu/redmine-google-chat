@@ -6,10 +6,10 @@ A Redmine plugin that posts new issues, issue updates and wiki updates to
 ## Features
 
 - Messages as Google Chat cards with an **OPEN ISSUE** button
-- Space and thread configurable per project, inherited by subprojects
-- Optionally one thread per issue
+- Every setting can be overridden per project, inherited by subprojects
+- Optional one thread per issue
 - Ignored fields whose changes are not posted
-- Order approval with a button in Redmine and in the chat
+- Optional order approval with a button in Redmine and in the chat
 - Private issues and private notes are never posted
 
 ## Requirements
@@ -51,15 +51,38 @@ Open *Administration › Plugins › Redmine Google Chat › Configure*.
 | Post Issue Updates?   | Posts issue updates; new issues are always posted                                |
 | Post Wiki Updates?    | Posts wiki updates                                                               |
 | Ignored Fields        | Fields whose changes are not posted, see [Ignored fields](#ignored-fields)       |
+| Order Approval?       | Enables the [order approval](#order-approval)                                    |
 
 ### Per project
 
-Create project custom fields (*Administration › Custom fields › Project*) to override the
-settings for a project and its subprojects:
+Every setting can be overridden for a project and its subprojects with a project custom field
+(*Administration › Custom fields › Project*). Empty values use the setting of the parent project
+or of the plugin.
 
-- `Google Chat URL`: posts the messages of the project to another space
-- `Google Chat Thread`: uses another thread for the project; `-` disables its messages, but
-  not those of its subprojects
+| Project custom field               | Format    | Overrides                                                |
+|------------------------------------|-----------|----------------------------------------------------------|
+| `Google Chat URL`                  | Text      | Google Chat URL, to post to another space                |
+| `Google Chat Thread`               | Text      | Google Chat Thread; `-` is not inherited by subprojects  |
+| `Google Chat One Thread per Issue` | Boolean   | One Thread per Issue?                                    |
+| `Google Chat Display Watchers`     | Boolean   | Display Watchers?                                        |
+| `Google Chat Post Issue Updates`   | Boolean   | Post Issue Updates?                                      |
+| `Google Chat Post Wiki Updates`    | Boolean   | Post Wiki Updates?                                       |
+| `Google Chat Ignored Fields`       | Long text | Ignored Fields; replaces the list of the plugin settings |
+| `Google Chat Order Approval`       | Boolean   | Order Approval?                                          |
+
+Boolean fields with the edit style *Check box* are never empty: Redmine saves an unchecked box
+as "No" when the project is saved. The check box then decides alone, and the setting of the
+parent project or of the plugin no longer applies:
+
+| Plugin setting | Project check box | Result |
+|----------------|-------------------|--------|
+| unchecked      | checked           | on     |
+| checked        | checked           | on     |
+| unchecked      | unchecked         | off    |
+| checked        | unchecked         | off    |
+
+To keep the setting of the parent project or of the plugin for a project, use the edit style
+*Drop-down list* or *Radio buttons* and leave the field empty.
 
 The former names `Hangouts Chat URL` and `Hangouts Chat Thread` still work.
 
@@ -85,12 +108,15 @@ Attribute names are listed in the journal `details` of `/issues/<id>.json?includ
 
 ## Order approval
 
+The order approval is disabled by default. Enable it with *Order Approval?* in the plugin
+settings, or per project with the project custom field `Google Chat Order Approval`.
+
 Issues whose subject contains `Bestellung` (case-insensitive) show a *Freigeben* button below
 the issue details. Clicking it adds the note `ist freigegeben` as the logged-in user. Once
 approved, the button is replaced by the approver and date. Anyone allowed to add notes to the
 issue can approve it.
 
-Chat messages about orders which are not approved yet get a **FREIGEBEN** button leading to the
+Chat messages about orders which are not approved yet get a **Freigeben** button leading to the
 approval button in Redmine.
 
 ## Changelog

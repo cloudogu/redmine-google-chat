@@ -5,10 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.6.0] 2026-11-06
+### Added
+- Every setting can be overridden for a project and its subprojects with a project custom field "Google Chat <setting>"
+### Changed
+- The order approval is disabled by default; enable it with the setting "Order Approval?" or per project with the project custom field "Google Chat Order Approval"
+
 ## [v0.5.0] 2026-11-06
 ### Added
 - Approve orders: issues whose subject contains "Bestellung" get an approval button which adds the note "ist freigegeben" as the current user
-- Chat messages about orders which are not approved yet get a "FREIGEBEN" button leading to the approval button in Redmine
+- Chat messages about orders which are not approved yet get a "Freigeben" button leading to the approval button in Redmine
 - Setting "Ignored Fields" to leave changes of certain fields out of update messages; updates which only change ignored fields are not sent at all
 - Setting "One Thread per Issue" to post all messages about an issue to a thread of its own
 ### Changed
