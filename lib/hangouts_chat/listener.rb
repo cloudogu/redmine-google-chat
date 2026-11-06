@@ -5,10 +5,10 @@ module HangoutsChat
     def redmine_hangouts_chat_issues_new_after_save(context = {})
       issue = context[:issue]
 
-      thread = thread_for_project issue.project
+      thread = issue_thread issue
       url = url_for_project issue.project
 
-      return unless thread
+      return if notifications_disabled? issue.project
       return if issue.is_private?
       return unless should_chat_message_be_sent(thread, url)
 
@@ -48,8 +48,8 @@ module HangoutsChat
 
       Rails.logger.info("found google chat ticket to url #{redact url}")
       Rails.logger.debug("thread #{thread}")
-      Rails.logger.debug("g. hangout chat url #{redact Setting.plugin_redmine_hangouts_chat['hangouts_chat_url']}")
-      Rails.logger.debug("g. hangout chat thr #{Setting.plugin_redmine_hangouts_chat['thread']}")
+      Rails.logger.debug("google chat url #{redact Setting.plugin_redmine_hangouts_chat['hangouts_chat_url']}")
+      Rails.logger.debug("google chat thread #{Setting.plugin_redmine_hangouts_chat['thread']}")
 
       return true
     end
@@ -58,12 +58,20 @@ module HangoutsChat
       issue = context[:issue]
       journal = context[:journal]
 
-      thread = thread_for_project issue.project
+      thread = issue_thread issue
       url = url_for_project issue.project
 
-      return unless thread and Setting.plugin_redmine_hangouts_chat['post_updates'] == '1'
+      return if notifications_disabled? issue.project
+      return unless Setting.plugin_redmine_hangouts_chat['post_updates'] == '1'
       return if issue.is_private?
       return if journal.private_notes?
+
+      details = journal.details.reject { |d| ignored_field? d }
+      if details.empty? && journal.notes.blank?
+        Rails.logger.debug("not sending google chat message for #{issue} because only ignored fields changed")
+        return
+      end
+
       return unless should_chat_message_be_sent(thread, url)
 
       msg = {
@@ -78,7 +86,7 @@ module HangoutsChat
 
       sections = []
 
-      fields = journal.details.map { |d| detail_to_field d }
+      fields = details.map { |d| detail_to_field d }
       sections << { :widgets => fields } if fields.size > 0
 
       sections << {
@@ -93,10 +101,10 @@ module HangoutsChat
       journal = issue.current_journal
       changeset = context[:changeset]
 
-      thread = thread_for_project issue.project
+      thread = issue_thread issue
       url = url_for_project issue.project
 
-      return unless thread
+      return if notifications_disabled? issue.project
       return if issue.is_private?
       return unless should_chat_message_be_sent(thread, url)
 
@@ -148,9 +156,10 @@ module HangoutsChat
         }
       ]
 
-      fields = issue.changes.except('updated_on', 'lock_version').map do |attr, (_old, new)|
-        detail_to_field JournalDetail.new(:property => 'attr', :prop_key => attr, :value => new)
-      end
+      fields = issue.changes.except('updated_on', 'lock_version')
+        .map { |attr, (_old, new)| JournalDetail.new(:property => 'attr', :prop_key => attr, :value => new) }
+        .reject { |detail| ignored_field? detail }
+        .map { |detail| detail_to_field detail }
       sections << { :widgets => fields } if fields.size > 0
 
       speak msg, thread, sections, url
@@ -167,7 +176,7 @@ module HangoutsChat
       thread = thread_for_project project
       url = url_for_project project
 
-      return unless thread
+      return if notifications_disabled? project
       return unless should_chat_message_be_sent(thread, url)
 
       sections = []
@@ -289,32 +298,59 @@ module HangoutsChat
     def url_for_project(proj)
       return nil if proj.blank?
 
-      cf = ProjectCustomField.find_by_name("Hangouts Chat URL")
-
       [
-        (proj.custom_value_for(cf).value rescue nil),
+        project_setting(proj, "URL"),
         (url_for_project proj.parent),
         Setting.plugin_redmine_hangouts_chat['hangouts_chat_url'],
       ].find { |v| v.present? }
     end
 
-    def thread_for_project(proj)
-      return nil if proj.blank?
+    # Channel name '-' is reserved for NOT notifying
+    DISABLED_THREAD = '-'
 
-      cf = ProjectCustomField.find_by_name("Hangouts Chat Thread")
-
-      val = [
-        (proj.custom_value_for(cf).value rescue nil),
-        (thread_for_project proj.parent),
-        Setting.plugin_redmine_hangouts_chat['thread'],
-      ].find { |v| v.present? }
-
-      # Channel name '-' is reserved for NOT notifying
-      return nil if val.to_s == '-'
-      val
+    def notifications_disabled?(proj)
+      configured_thread(proj).to_s == DISABLED_THREAD
     end
 
-    def detail_to_field(detail)
+    # thread of the project; without one, every message is posted on its own
+    def thread_for_project(proj)
+      val = configured_thread proj
+      val.to_s == DISABLED_THREAD ? nil : val.presence
+    end
+
+    # thread of the project, its parents or the plugin settings, including '-';
+    # a '-' of a parent project is not inherited
+    def configured_thread(proj)
+      return nil if proj.blank?
+
+      parent = configured_thread proj.parent
+      [
+        project_setting(proj, "Thread"),
+        (parent unless parent.to_s == DISABLED_THREAD),
+        Setting.plugin_redmine_hangouts_chat['thread'],
+      ].find { |v| v.present? }
+    end
+
+    # thread for messages about the issue. With "One Thread per Issue" each issue gets
+    # a thread "<thread>-issue-<id>", or "redmine-issue-<id>" without a thread
+    def issue_thread(issue)
+      thread = thread_for_project issue.project
+      return thread unless Setting.plugin_redmine_hangouts_chat['thread_per_issue'] == '1'
+      "#{thread || 'redmine'}-issue-#{issue.id}"
+    end
+
+    # value of the project custom field "Google Chat <name>"; the former name
+    # "Hangouts Chat <name>" is still supported
+    def project_setting(proj, name)
+      ["Google Chat #{name}", "Hangouts Chat #{name}"].each do |field_name|
+        cf = ProjectCustomField.find_by_name(field_name)
+        value = (proj.custom_value_for(cf).value rescue nil) if cf
+        return value if value.present?
+      end
+      nil
+    end
+
+    def field_key_and_title(detail)
       if detail.property == "cf"
         key = CustomField.find(detail.prop_key).name rescue nil
         title = key
@@ -331,6 +367,26 @@ module HangoutsChat
           title = I18n.t "field_#{key}"
         end
       end
+      [key, title]
+    end
+
+    # names (custom field names, attribute names or their labels) of fields whose changes are not posted
+    def ignored_fields
+      Setting.plugin_redmine_hangouts_chat['ignored_fields'].to_s
+        .split(/\r?\n/).map { |name| name.strip.downcase }.reject(&:empty?)
+    end
+
+    def ignored_field?(detail)
+      ignored = ignored_fields
+      return false if ignored.empty?
+      names = field_key_and_title(detail)
+      # also accept attribute names as the REST API lists them, e.g. "priority_id"
+      names << detail.prop_key.to_s if detail.property == "attr"
+      names.compact.any? { |name| ignored.include? name.to_s.strip.downcase }
+    end
+
+    def detail_to_field(detail)
+      key, title = field_key_and_title(detail)
 
       short = true
       value = detail.value.to_s
