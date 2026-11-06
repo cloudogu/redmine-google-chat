@@ -70,6 +70,20 @@ or of the plugin.
 | `Google Chat Ignored Fields`       | Long text | Ignored Fields; replaces the list of the plugin settings |
 | `Google Chat Order Approval`       | Boolean   | Order Approval?                                          |
 
+Boolean fields with the edit style *Check box* are never empty: Redmine saves an unchecked box
+as "No" when the project is saved. The check box then decides alone, and the setting of the
+parent project or of the plugin no longer applies:
+
+| Plugin setting | Project check box | Result |
+|----------------|-------------------|--------|
+| unchecked      | checked           | on     |
+| checked        | checked           | on     |
+| unchecked      | unchecked         | off    |
+| checked        | unchecked         | off    |
+
+To keep the setting of the parent project or of the plugin for a project, use the edit style
+*Drop-down list* or *Radio buttons* and leave the field empty.
+
 The former names `Hangouts Chat URL` and `Hangouts Chat Thread` still work.
 
 ### Threads
