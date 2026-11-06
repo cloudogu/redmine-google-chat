@@ -31,7 +31,7 @@ module HangoutsChat
 
       widgets << decorated_text("PERSON", I18n.t("field_assigned_to"), issue.assigned_to.to_s) if issue.assigned_to
 
-      widgets << decorated_text("MULTIPLE_PEOPLE", I18n.t("field_watcher"), issue.watcher_users.join(', ')) if Setting.plugin_redmine_hangouts_chat['display_watchers'] == 'yes' and issue.watcher_users.length > 0
+      widgets << decorated_text("MULTIPLE_PEOPLE", I18n.t("field_watcher"), issue.watcher_users.join(', ')) if ProjectSettings.enabled?(issue.project, "Display Watchers", 'display_watchers') and issue.watcher_users.length > 0
 
       speak msg, thread, [{ :widgets => widgets }], url
     end
@@ -62,11 +62,12 @@ module HangoutsChat
       url = url_for_project issue.project
 
       return if notifications_disabled? issue.project
-      return unless Setting.plugin_redmine_hangouts_chat['post_updates'] == '1'
+      return unless ProjectSettings.enabled?(issue.project, "Post Issue Updates", 'post_updates')
       return if issue.is_private?
       return if journal.private_notes?
 
-      details = journal.details.reject { |d| ignored_field? d }
+      ignored = ignored_fields issue.project
+      details = journal.details.reject { |d| ignored_field?(d, ignored) }
       if details.empty? && journal.notes.blank?
         Rails.logger.debug("not sending google chat message for #{issue} because only ignored fields changed")
         return
@@ -156,9 +157,10 @@ module HangoutsChat
         }
       ]
 
+      ignored = ignored_fields issue.project
       fields = issue.changes.except('updated_on', 'lock_version')
         .map { |attr, (_old, new)| JournalDetail.new(:property => 'attr', :prop_key => attr, :value => new) }
-        .reject { |detail| ignored_field? detail }
+        .reject { |detail| ignored_field?(detail, ignored) }
         .map { |detail| detail_to_field detail }
       sections << { :widgets => fields } if fields.size > 0
 
@@ -166,10 +168,10 @@ module HangoutsChat
     end
 
     def controller_wiki_edit_after_save(context = {})
-      return unless Setting.plugin_redmine_hangouts_chat['post_wiki_updates'] == '1'
-
       project = context[:project]
       page = context[:page]
+
+      return unless ProjectSettings.enabled?(project, "Post Wiki Updates", 'post_wiki_updates')
 
       user = page.content.author
 
@@ -298,11 +300,7 @@ module HangoutsChat
     def url_for_project(proj)
       return nil if proj.blank?
 
-      [
-        project_setting(proj, "URL"),
-        (url_for_project proj.parent),
-        Setting.plugin_redmine_hangouts_chat['hangouts_chat_url'],
-      ].find { |v| v.present? }
+      ProjectSettings.value(proj, "URL", 'hangouts_chat_url').presence
     end
 
     # Channel name '-' is reserved for NOT notifying
@@ -325,7 +323,7 @@ module HangoutsChat
 
       parent = configured_thread proj.parent
       [
-        project_setting(proj, "Thread"),
+        ProjectSettings.field_value(proj, "Thread"),
         (parent unless parent.to_s == DISABLED_THREAD),
         Setting.plugin_redmine_hangouts_chat['thread'],
       ].find { |v| v.present? }
@@ -335,19 +333,8 @@ module HangoutsChat
     # a thread "<thread>-issue-<id>", or "redmine-issue-<id>" without a thread
     def issue_thread(issue)
       thread = thread_for_project issue.project
-      return thread unless Setting.plugin_redmine_hangouts_chat['thread_per_issue'] == '1'
+      return thread unless ProjectSettings.enabled?(issue.project, "One Thread per Issue", 'thread_per_issue')
       "#{thread || 'redmine'}-issue-#{issue.id}"
-    end
-
-    # value of the project custom field "Google Chat <name>"; the former name
-    # "Hangouts Chat <name>" is still supported
-    def project_setting(proj, name)
-      ["Google Chat #{name}", "Hangouts Chat #{name}"].each do |field_name|
-        cf = ProjectCustomField.find_by_name(field_name)
-        value = (proj.custom_value_for(cf).value rescue nil) if cf
-        return value if value.present?
-      end
-      nil
     end
 
     def field_key_and_title(detail)
@@ -371,13 +358,12 @@ module HangoutsChat
     end
 
     # names (custom field names, attribute names or their labels) of fields whose changes are not posted
-    def ignored_fields
-      Setting.plugin_redmine_hangouts_chat['ignored_fields'].to_s
+    def ignored_fields(project)
+      ProjectSettings.value(project, "Ignored Fields", 'ignored_fields').to_s
         .split(/\r?\n/).map { |name| name.strip.downcase }.reject(&:empty?)
     end
 
-    def ignored_field?(detail)
-      ignored = ignored_fields
+    def ignored_field?(detail, ignored)
       return false if ignored.empty?
       names = field_key_and_title(detail)
       # also accept attribute names as the REST API lists them, e.g. "priority_id"
