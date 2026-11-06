@@ -7,7 +7,7 @@ Redmine::Plugin.register :redmine_hangouts_chat do
 	url 'https://github.com/cloudogu/redmine-google-chat'
 	description 'Posts new issues, issue updates and wiki updates to Google Chat spaces via incoming webhooks, ' \
 		'with a space and thread per project or a thread per issue, ignored fields and order approval'
-	version '0.5.0'
+	version '0.6.0'
 
 	requires_redmine :version_or_higher => '0.8.0'
 
