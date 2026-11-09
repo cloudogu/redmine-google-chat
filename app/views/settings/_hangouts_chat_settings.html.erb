@@ -37,14 +37,21 @@
 </p>
 
 <p>
+	<%= label_tag 'settings[post_description]', 'Post Description?' %>
+	<%= check_box_tag 'settings[post_description]', '1', settings['post_description'] == '1' %>
+	<em class="info">Posts the description of a new issue as the first reply to its message.</em>
+</p>
+
+<p>
 	<%= label_tag 'settings[post_updates]', 'Post Issue Updates?' %>
 	<%= check_box_tag 'settings[post_updates]', '1', settings['post_updates'] == '1' %>
-	<em class="info">New issues are always posted.</em>
+	<em class="info">Posts changes of issues with their changed fields and notes. New issues are always posted.</em>
 </p>
 
 <p>
 	<%= label_tag 'settings[post_wiki_updates]', 'Post Wiki Updates?' %>
 	<%= check_box_tag 'settings[post_wiki_updates]', '1', settings['post_wiki_updates'] == '1' %>
+	<em class="info">Posts changes of wiki pages with their comment.</em>
 </p>
 
 <p>

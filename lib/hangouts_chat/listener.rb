@@ -1,4 +1,5 @@
 require 'httpclient'
+require 'securerandom'
 
 module HangoutsChat
   class Listener < Redmine::Hook::Listener
@@ -19,6 +20,9 @@ module HangoutsChat
     # attributes whose value is shown on several lines
     LONG_ATTRIBUTES = %w[title subject description].freeze
 
+    # Google Chat accepts messages up to 32,000 bytes
+    MAX_TEXT_BYTES = 30_000
+
     def redmine_hangouts_chat_issues_new_after_save(context = {})
       issue = context[:issue]
       return if issue.is_private?
@@ -37,8 +41,14 @@ module HangoutsChat
         widgets << decorated_text("MULTIPLE_PEOPLE", I18n.t("field_watcher"), issue.watcher_users.join(', '))
       end
 
+      thread = issue_thread issue
+      reply = description_reply issue
+      # the description is posted to the thread of the message; without a thread,
+      # the message starts a thread of its own
+      thread ||= "redmine-issue-#{issue.id}-#{SecureRandom.hex(4)}" if reply
+
       msg = issue_message(issue, issue.author, "created", issue.description)
-      speak msg, issue_thread(issue), [{ :widgets => widgets }], url
+      speak msg, thread, [{ :widgets => widgets }], url, reply
     end
 
     def redmine_hangouts_chat_issues_edit_after_save(context = {})
@@ -122,7 +132,8 @@ module HangoutsChat
 
     private
 
-    def speak(msg, thread, sections, url)
+    # posts the message, and the reply to the thread of the message
+    def speak(msg, thread, sections, url, reply = nil)
       url += '&messageReplyOption=REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD' if thread
 
       buttons = []
@@ -145,16 +156,37 @@ module HangoutsChat
       }
       params[:thread] = { :threadKey => thread } if thread
 
+      messages = [params]
+      messages << { :text => reply, :thread => { :threadKey => thread } } if reply && thread
+
       Rails.logger.info("sending google chat message to #{redact url}#{" in thread #{thread}" if thread}")
-      begin
+      post_in_background url, messages
+    end
+
+    # posts the messages one after another in the background, so a reply follows its message
+    def post_in_background(url, messages)
+      Thread.new do
         client = HTTPClient.new
         client.ssl_config.cert_store.set_default_paths
         client.ssl_config.ssl_version = :auto
-        client.post_async url, { :body => params.to_json, :header => { 'Content-Type' => 'application/json' } }
-      rescue Exception => e
+        messages.each do |params|
+          response = client.post url, { :body => params.to_json, :header => { 'Content-Type' => 'application/json' } }
+          next if response.status.between?(200, 299)
+
+          Rails.logger.warn("google chat answered #{response.status}: #{redact response.body.to_s.truncate(500)}")
+          break
+        end
+      rescue StandardError => e
         Rails.logger.warn("cannot connect to #{redact url}")
         Rails.logger.warn(redact("#{e.class}: #{e.message}"))
       end
+    end
+
+    # description of a new issue, posted as reply to its message
+    def description_reply(issue)
+      return nil unless ProjectSettings.enabled?(issue.project, 'post_description')
+
+      issue.description.to_s.strip.presence&.truncate_bytes(MAX_TEXT_BYTES)
     end
 
     # webhook url for the messages of the project, nil if they are not posted
