@@ -8,6 +8,7 @@ A Redmine plugin that posts new issues, issue updates and wiki updates to
 - Messages as Google Chat cards with an **OPEN ISSUE** button
 - Every setting can be overridden per project, inherited by subprojects
 - Optional one thread per issue
+- Description of a new issue as the first reply to its message
 - Ignored fields whose changes are not posted
 - Optional order approval with a button in Redmine and in the chat
 - Private issues and private notes are never posted
@@ -42,16 +43,17 @@ directory and restart again.
 
 Open *Administration › Plugins › Redmine Google Chat › Configure*.
 
-| Setting               | Description                                                                      |
-|-----------------------|----------------------------------------------------------------------------------|
-| Google Chat URL       | Webhook URL of the Google Chat space                                             |
-| Google Chat Thread    | Thread for the messages, see [Threads](#threads)                                 |
-| One Thread per Issue? | Posts all messages about an issue to a thread of its own                         |
-| Display Watchers?     | Lists the watchers in messages about new issues                                  |
-| Post Issue Updates?   | Posts issue updates; new issues are always posted                                |
-| Post Wiki Updates?    | Posts wiki updates                                                               |
-| Ignored Fields        | Fields whose changes are not posted, see [Ignored fields](#ignored-fields)       |
-| Order Approval?       | Enables the [order approval](#order-approval)                                    |
+| Setting               | Description                                                                               |
+|-----------------------|-------------------------------------------------------------------------------------------|
+| Google Chat URL       | Webhook URL of the Google Chat space                                                      |
+| Google Chat Thread    | Thread for the messages, see [Threads](#threads)                                          |
+| One Thread per Issue? | Posts all messages about an issue to a thread of its own                                  |
+| Display Watchers?     | Lists the watchers in messages about new issues                                           |
+| Post Description?     | Posts the description of a new issue as the first reply to its message                    |
+| Post Issue Updates?   | Posts changes of issues with their changed fields and notes; new issues are always posted |
+| Post Wiki Updates?    | Posts changes of wiki pages with their comment                                            |
+| Ignored Fields        | Fields whose changes are not posted, see [Ignored fields](#ignored-fields)                |
+| Order Approval?       | Enables the [order approval](#order-approval)                                             |
 
 ### Per project
 
@@ -65,6 +67,7 @@ or of the plugin.
 | `Google Chat Thread`               | Text      | Google Chat Thread; `-` is not inherited by subprojects  |
 | `Google Chat One Thread per Issue` | Boolean   | One Thread per Issue?                                    |
 | `Google Chat Display Watchers`     | Boolean   | Display Watchers?                                        |
+| `Google Chat Post Description`     | Boolean   | Post Description?                                        |
 | `Google Chat Post Issue Updates`   | Boolean   | Post Issue Updates?                                      |
 | `Google Chat Post Wiki Updates`    | Boolean   | Post Wiki Updates?                                       |
 | `Google Chat Ignored Fields`       | Long text | Ignored Fields; replaces the list of the plugin settings |
@@ -97,6 +100,10 @@ The former names `Hangouts Chat URL` and `Hangouts Chat Thread` still work.
 | `-`          | any                   | nowhere, messages are disabled     |
 
 Wiki updates never use a thread per issue.
+
+With *Post Description?*, the description of a new issue is posted as a reply to its message, in
+the thread of the message. Without a thread, the message about a new issue starts a thread of its
+own for the description.
 
 ### Ignored fields
 

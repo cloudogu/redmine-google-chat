@@ -10,6 +10,7 @@ module HangoutsChat
       'display_watchers' => "Display Watchers",
       'post_updates' => "Post Issue Updates",
       'post_wiki_updates' => "Post Wiki Updates",
+      'post_description' => "Post Description",
       'ignored_fields' => "Ignored Fields",
       'order_approval' => "Order Approval"
     }.freeze
