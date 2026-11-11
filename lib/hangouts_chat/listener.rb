@@ -186,7 +186,13 @@ module HangoutsChat
     def description_reply(issue)
       return nil unless ProjectSettings.enabled?(issue.project, 'post_description')
 
-      issue.description.to_s.strip.presence&.truncate_bytes(MAX_TEXT_BYTES)
+      plain_text(issue.description).presence&.truncate_bytes(MAX_TEXT_BYTES)
+    end
+
+    # Redmine stores line breaks as "\r\n", which Google Chat shows as two line breaks;
+    # several empty lines are reduced to one
+    def plain_text(text)
+      text.to_s.gsub(/\r\n?/, "\n").gsub(/[ \t]+$/, '').gsub(/\n{3,}/, "\n\n").strip
     end
 
     # webhook url for the messages of the project, nil if they are not posted
@@ -235,7 +241,7 @@ module HangoutsChat
     end
 
     def decorated_text(icon, label, content, multiline = false)
-      content = escape content.to_s
+      content = escape plain_text(content)
       content = "-" if content.empty?
       widget = {
         :decoratedText => {
@@ -249,7 +255,8 @@ module HangoutsChat
     end
 
     def text_paragraph(text, escape_text = true)
-      { :textParagraph => { :text => escape_text ? escape(text.to_s) : text.to_s } }
+      text = plain_text(text)
+      { :textParagraph => { :text => escape_text ? escape(text) : text } }
     end
 
     def escape(msg)
