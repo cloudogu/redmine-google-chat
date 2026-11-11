@@ -6,7 +6,7 @@ module HangoutsChat
     NAMES = {
       'hangouts_chat_url' => "URL",
       'thread' => "Thread",
-      'thread_per_issue' => "One Thread per Issue",
+      'thread_per_issue' => "Thread per Issue",
       'display_watchers' => "Display Watchers",
       'post_updates' => "Post Issue Updates",
       'post_wiki_updates' => "Post Wiki Updates",
