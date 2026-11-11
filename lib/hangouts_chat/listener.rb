@@ -292,7 +292,7 @@ module HangoutsChat
       ].find { |v| v.present? }
     end
 
-    # thread for messages about the issue. With "One Thread per Issue" each issue gets
+    # thread for messages about the issue. With "Thread per Issue" each issue gets
     # a thread "<thread>-issue-<id>", or "redmine-issue-<id>" without a thread
     def issue_thread(issue)
       thread = thread_for_project issue.project

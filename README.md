@@ -47,7 +47,7 @@ Open *Administration › Plugins › Redmine Google Chat › Configure*.
 |-----------------------|-------------------------------------------------------------------------------------------|
 | Google Chat URL       | Webhook URL of the Google Chat space                                                      |
 | Google Chat Thread    | Thread for the messages, see [Threads](#threads)                                          |
-| One Thread per Issue? | Posts all messages about an issue to a thread of its own                                  |
+| Thread per Issue?     | Posts all messages about an issue to a thread of its own                                  |
 | Display Watchers?     | Lists the watchers in messages about new issues                                           |
 | Post Description?     | Posts the description of a new issue as the first reply to its message                    |
 | Post Issue Updates?   | Posts changes of issues with their changed fields and notes; new issues are always posted |
@@ -65,7 +65,7 @@ or of the plugin.
 |------------------------------------|-----------|----------------------------------------------------------|
 | `Google Chat URL`                  | Text      | Google Chat URL, to post to another space                |
 | `Google Chat Thread`               | Text      | Google Chat Thread; `-` is not inherited by subprojects  |
-| `Google Chat One Thread per Issue` | Boolean   | One Thread per Issue?                                    |
+| `Google Chat Thread per Issue`     | Boolean   | Thread per Issue?                                        |
 | `Google Chat Display Watchers`     | Boolean   | Display Watchers?                                        |
 | `Google Chat Post Description`     | Boolean   | Post Description?                                        |
 | `Google Chat Post Issue Updates`   | Boolean   | Post Issue Updates?                                      |
@@ -91,7 +91,7 @@ The former names `Hangouts Chat URL` and `Hangouts Chat Thread` still work.
 
 ### Threads
 
-| Thread       | One Thread per Issue? | Messages go to                     |
+| Thread       | Thread per Issue?     | Messages go to                     |
 |--------------|-----------------------|------------------------------------|
 | *(empty)*    | off                   | a new message each, no thread      |
 | `support`    | off                   | the thread `support`               |
