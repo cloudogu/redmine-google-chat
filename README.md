@@ -105,6 +105,11 @@ With *Post Description?*, the description of a new issue is posted as a reply to
 the thread of the message. Without a thread, the message about a new issue starts a thread of its
 own for the description.
 
+An email signature below the delimiter of RFC 3676 (a line of exactly `-- `) is left out of the reply. 
+To remove these from the description of issues created by email, 
+use *Administration › Settings › Incoming emails › Truncate emails after one of these lines* of Redmine. 
+The description of the issue in Redmine stays unchanged otherwise.
+
 ### Ignored fields
 
 List one field per line: the name of a custom field  or of an issue attribute.
