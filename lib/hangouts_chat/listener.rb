@@ -41,13 +41,15 @@ module HangoutsChat
         widgets << decorated_text("MULTIPLE_PEOPLE", I18n.t("field_watcher"), issue.watcher_users.join(', '))
       end
 
+      # the signature is neither posted nor searched for mentions
+      description = without_signature issue.description
       thread = issue_thread issue
-      reply = description_reply issue
+      reply = description_reply issue, description
       # the description is posted to the thread of the message; without a thread,
       # the message starts a thread of its own
       thread ||= "redmine-issue-#{issue.id}-#{SecureRandom.hex(4)}" if reply
 
-      msg = issue_message(issue, issue.author, "created", issue.description)
+      msg = issue_message(issue, issue.author, "created", description)
       speak msg, thread, [{ :widgets => widgets }], url, reply
     end
 
@@ -157,7 +159,12 @@ module HangoutsChat
       params[:thread] = { :threadKey => thread } if thread
 
       messages = [params]
-      messages << { :text => reply, :thread => { :threadKey => thread } } if reply && thread
+      if reply && thread
+        messages << {
+          :cardsV2 => [{ :cardId => "redmine-description", :card => { :sections => [{ :widgets => [text_paragraph(reply)] }] } }],
+          :thread => { :threadKey => thread }
+        }
+      end
 
       Rails.logger.info("sending google chat message to #{redact url}#{" in thread #{thread}" if thread}")
       post_in_background url, messages
@@ -183,10 +190,16 @@ module HangoutsChat
     end
 
     # description of a new issue, posted as reply to its message
-    def description_reply(issue)
+    def description_reply(issue, description)
       return nil unless ProjectSettings.enabled?(issue.project, 'post_description')
 
-      plain_text(issue.description).presence&.truncate_bytes(MAX_TEXT_BYTES)
+      plain_text(description).presence
+    end
+
+    # text before the signature delimiter of RFC 3676, a line of exactly "-- ";
+    # the delimiter and everything below it are the signature
+    def without_signature(text)
+      text.to_s.gsub(/\r\n?/, "\n").split(/^-- $/, 2).first.to_s
     end
 
     # Redmine stores line breaks as "\r\n", which Google Chat shows as two line breaks;
@@ -256,7 +269,13 @@ module HangoutsChat
 
     def text_paragraph(text, escape_text = true)
       text = plain_text(text)
-      { :textParagraph => { :text => escape_text ? escape(text) : text } }
+      text = truncate_escaped(escape(text)) if escape_text
+      { :textParagraph => { :text => text } }
+    end
+
+    # cuts html-escaped text to MAX_TEXT_BYTES; an entity cut in half is removed
+    def truncate_escaped(text)
+      text.truncate_bytes(MAX_TEXT_BYTES).sub(/&[^;]*…\z/, '…')
     end
 
     def escape(msg)
@@ -361,8 +380,9 @@ module HangoutsChat
     end
 
     # "@name" mentions in the text, added to the message title
+    # the domain of an email address is no mention
     def mentions(text)
-      names = text.to_s.scan(/@[a-z\d][a-z\d_\-]*/).uniq
+      names = text.to_s.scan(/(?<![[:alnum:]_])@[a-z\d][a-z\d_\-]*/).uniq
       names.any? ? "\nTo: " + names.join(', ') : nil
     end
   end

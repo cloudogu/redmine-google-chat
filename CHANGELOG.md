@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Changed
+- The description posted as first reply leaves out an email signature below the delimiter (a line of exactly `-- `)
+- The description is posted as a card, like the message it replies to
+### Fixed
+- The description posted as first reply is no longer read as Google Chat markup
+- The domain of an email address is no longer listed as a `@name` mention in the message
+
 ## [v0.7.1] 2026-11-11
 ### Fixed
 - Shorten project custom field name for thread per issue
