@@ -254,7 +254,7 @@ module HangoutsChat
     end
 
     def decorated_text(icon, label, content, multiline = false)
-      content = escape plain_text(content)
+      content = truncate_escaped(escape(plain_text(content)))
       content = "-" if content.empty?
       widget = {
         :decoratedText => {
